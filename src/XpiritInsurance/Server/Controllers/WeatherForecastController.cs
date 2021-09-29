@@ -8,7 +8,7 @@ namespace XpiritInsurance.Server.Controllers;
 [Authorize]
 [ApiController]
 [Route("[controller]")]
-[RequiredScope(RequiredScopesConfigurationKey = "AzureAd:Scopes")]
+[RequiredScope(RequiredScopesConfigurationKey = "AzureAdB2C:Scopes")]
 public class WeatherForecastController : ControllerBase
 {
     private static readonly string[] Summaries = new[]
