@@ -38,13 +38,13 @@ This will scaffold a new solution, configured to use the Xpirit Insurance demo A
 
 **1. Launch Settings**
 
-    Open the file `launchsettings.json` in the 'Server' project:
+    Open the file `Properties\launchsettings.json` in the 'Server' project:
 
     ```
     code d:\projects\clubcloud\XpiritInsurance\Server\Properties\launchSettings.json
     ```
 
-    Modify the `applicationUrl` value:
+    Modify the `applicationUrl` value on line 16, in the section named `XpiritInsurance`:
 
     ```json
     "applicationUrl": "https://localhost:7293;http://localhost:5088",
@@ -55,62 +55,9 @@ This will scaffold a new solution, configured to use the Xpirit Insurance demo A
     "applicationUrl": "https://localhost:5001;http://localhost:5000",
     ```
 
-**2. Program.cs**
-Open the file `Program.cs` in the 'Client project:
+**2. API Controller Scopes**
 
-    ```
-    code d:\projects\clubcloud\XpiritInsurance\Client\Program.cs
-    ```
-
-    Modify the `LoginMode` so users are redirected to login, instead of showing a pop-up window:
-
-    Change:
-    ```csharp
-        builder.Services.AddMsalAuthentication(options =>
-        {
-            builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-            options.ProviderOptions.DefaultAccessTokenScopes.Add("https://xpiritinsurance.onmicrosoft.com/3b551417-548e-4e8e-80c3-44bb06f3aa64/API.Access");
-        });
-    ```
-    into: 
-
-    ```csharp
-        builder.Services.AddMsalAuthentication(options =>
-        {
-            builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-            options.ProviderOptions.DefaultAccessTokenScopes.Add("https://xpiritinsurance.onmicrosoft.com/3b551417-548e-4e8e-80c3-44bb06f3aa64/API.Access");
-            options.ProviderOptions.LoginMode = "redirect";
-        });
-    ```
-
-**3. Client Project file**
-
-    Modify the project file 'XpiritInsurance.Client.csproj' and exempt the reference `Microsoft.Authentication.WebAssembly.Msal' from trimming.
-
-    Change the references from:
-    ```xml
-    <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0-rc.1.21452.15" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0-rc.1.21452.15" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="6.0.0-rc.1.21452.15" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0-rc.1.21451.13" />
-    </ItemGroup>
-    ```
-    into:
-
-    ```xml
-    <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0-rc.1.21452.15" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0-rc.1.21452.15" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="6.0.0-rc.1.21452.15" />
-        <TrimmerRootAssembly Include="Microsoft.Authentication.WebAssembly.Msal"  />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0-rc.1.21451.13" />
-    </ItemGroup>
-    ```
-
-**4. API Controller Scopes**
-
-    In the 'Server' project, open the file ''.
+    In the 'Server' project, open the file 'Controllers\WeatherForecastController.cs'.
     Change the attribute code from:
 
     ```csharp
@@ -122,7 +69,7 @@ Open the file `Program.cs` in the 'Client project:
     [RequiredScope(RequiredScopesConfigurationKey = "AzureAdB2C:Scopes")]
     ```
 
-    In the same project change the configuration to define the required API scope. Modify the appsettings.json from:
+    In the same project change the configuration to define the required API scope. Modify the file 'appsettings.json' from:
 
     ```json
     {
@@ -133,7 +80,9 @@ Open the file `Program.cs` in the 'Client project:
         "SignUpSignInPolicyId": "B2C_1_UserFlowSuSi"
     },
     ```
-    into
+    
+    into this:
+
     ```json
     {
     "AzureAdB2C": {
@@ -325,6 +274,58 @@ Open the file `Program.cs` in the 'Client project:
      > Your project should now compile and run without errors. Use `dotnet run` from the 'Server' project to ensure everything works.
 
     **1. Adding custom code to the Blazor Client**
+
+Open the file `Program.cs` in the 'Client project:
+
+    ```
+    code d:\projects\clubcloud\XpiritInsurance\Client\Program.cs
+    ```
+
+    Modify the `LoginMode` so users are redirected to login, instead of showing a pop-up window:
+
+    Change:
+    ```csharp
+        builder.Services.AddMsalAuthentication(options =>
+        {
+            builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
+            options.ProviderOptions.DefaultAccessTokenScopes.Add("https://xpiritinsurance.onmicrosoft.com/3b551417-548e-4e8e-80c3-44bb06f3aa64/API.Access");
+        });
+    ```
+    into: 
+
+    ```csharp
+        builder.Services.AddMsalAuthentication(options =>
+        {
+            builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
+            options.ProviderOptions.DefaultAccessTokenScopes.Add("https://xpiritinsurance.onmicrosoft.com/3b551417-548e-4e8e-80c3-44bb06f3aa64/API.Access");
+            options.ProviderOptions.LoginMode = "redirect";
+        });
+    ```
+
+**2. Client Project file**
+
+    Modify the project file 'XpiritInsurance.Client.csproj' and exempt the reference `Microsoft.Authentication.WebAssembly.Msal' from trimming by adding a new element named `TrimmerRootAssembly` at the bottom of the section.
+
+    Change the references from:
+    ```xml
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0-rc.1.21452.15" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0-rc.1.21452.15" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="6.0.0-rc.1.21452.15" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0-rc.1.21451.13" />
+    </ItemGroup>
+    ```
+    into:
+
+    ```xml
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0-rc.1.21452.15" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0-rc.1.21452.15" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="6.0.0-rc.1.21452.15" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0-rc.1.21451.13" />
+        <TrimmerRootAssembly Include="Microsoft.Authentication.WebAssembly.Msal"  />
+    </ItemGroup>
+    ```
 
     - Add the MudBlazor Nuget package to the Client project for some nice UI components:
         ```
@@ -637,6 +638,12 @@ Open the file `Program.cs` in the 'Client project:
             </nav>
         </div>
     ```
+
+    > Check if everything works by running the project, logging in, getting a quote and buying the insurance.
+
+## Add Storage Queue
+PM> cd ..\Server
+PM> dotnet add package Azure.Storage.Queues
 
 ## Using our prepared 'Xpirit Insurance' demo environment
 
