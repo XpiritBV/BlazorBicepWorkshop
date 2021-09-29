@@ -12,6 +12,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
+//Add mock services
+builder.Services.AddSingleton<XpiritInsurance.Server.Services.QuoteAmountService>();
+builder.Services.AddSingleton<XpiritInsurance.Server.Services.InsuranceService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -169,7 +169,7 @@ Open the file `Program.cs` in the 'Client project:
     - Quote.cs
         ```csharp
         namespace XpiritInsurance.Shared;
-        public record Quote(string UserName, InsuranceType InsuranceType, decimal AmountPerMonth);
+        public record Quote(string? UserName, InsuranceType InsuranceType, decimal AmountPerMonth);
         ```
 
     Open the folder 'XpiritInsurance.Server' and add these files:
@@ -314,8 +314,331 @@ Open the file `Program.cs` in the 'Client project:
             }
         }
         ```
+    - Open the file 'program.cs' to register the 2 newly added (mock) services:
+      On line 15, below `builder.Services.AddRazorPages();`, insert these new lines of code:
+        ```csharp
+        //Add mock services
+        builder.Services.AddSingleton<XpiritInsurance.Server.Services.QuoteAmountService>();
+        builder.Services.AddSingleton<XpiritInsurance.Server.Services.InsuranceService>();
+        ```
 
-#### Using our prepared 'Xpirit Insurance' demo environment
+     > Your project should now compile and run without errors. Use `dotnet run` from the 'Server' project to ensure everything works.
+
+    **1. Adding custom code to the Blazor Client**
+
+    - Add the MudBlazor Nuget package to the Client project for some nice UI components:
+        ```
+        cd ..\Client
+        dotnet add package MudBlazor
+        ```
+
+    - Open the file named '_Imports.razor' in the Client folder, and add MudBlazor:
+
+    ```
+    @using MudBlazor
+    ```
+
+    - Open the existing file 'App.razor' in the Client folder, and register MudBlazor components, by adding these lines in the bottom of the file, **after** the **closing** element named `</CascadingAuthenticationState`:
+
+    ```csharp
+    <MudThemeProvider/>
+    <MudDialogProvider/>
+    <MudSnackbarProvider/>
+    ```
+
+    - Open the file 'wwwroot/index.html' and add this snippet in the `head` section:
+
+    ```html
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    ```
+    Add this snippet to the end `body` section:
+    ```
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    ```
+
+
+    - As a final step to configure the MudBlazor library, enable the services inside 'Program.cs' **before** this code `await builder.Build().RunAsync();`:
+
+    ```csharp
+    //line 1:
+    using MudBlazor.Services;
+    //line 25:
+    builder.Services.AddMudServices();
+    ```
+
+    We will now add some User Interface components that interact with the Web API's to allow users to buy insurance.
+    The first page will fetch a user's existing insurances from the API and display them.
+
+    - Add a component 'Pages/Insurances.razor' (in the same folder that holds the scaffolded component 'Index.razor'):
+
+        ```csharp
+        @page "/insurances"
+        @using Microsoft.AspNetCore.Authorization
+        @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+        @using XpiritInsurance.Shared
+        @attribute [Authorize]
+        @inject HttpClient Http
+
+        <h1>Insurance</h1>
+
+        <div class="contentDiv">
+        @if (_insurances == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            <MudSimpleTable Style="overflow-x: auto;" Hover="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th>Insurance</th>
+                        <th>Monthly amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var insurance in _insurances)
+                    {
+                        <tr>
+                            <td>@insurance.InsuranceType</td>
+                            <td>@insurance.AmountPerMonth</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+        @if (_hasError)
+        {
+            <MudAlert Severity="Severity.Error">@_message</MudAlert>
+        }
+
+        </div>
+
+        @if (_isLoading)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+        }
+
+
+        @code {
+            private List<Insurance> _insurances = new();
+            private bool _hasError = false;
+            private bool _isLoading = false;
+            private string? _message;
+
+            protected override async Task OnInitializedAsync()
+            {
+                _hasError = false;
+                _isLoading = true;
+                try
+                {
+                    var data = await Http.GetFromJsonAsync<IEnumerable<Insurance>>("insurance");
+                    _insurances.AddRange(data);
+                }
+                catch (AccessTokenNotAvailableException exception)
+                {
+                    exception.Redirect();
+                }
+                catch (Exception ex)
+                {
+                    _hasError = true;
+                    _message = ex.Message;
+                }
+                finally
+                {
+                    _isLoading = false;
+                }
+            }
+        }
+        ```
+
+    The second page will fetch quotes for new insurances from the API and display them, so the user can buy one.
+
+    - Add a component 'Pages/Quotes.razor':
+
+        ```csharp
+        @page "/quotes"
+        @using Microsoft.AspNetCore.Authorization
+        @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+        @using XpiritInsurance.Shared
+        @attribute [Authorize]
+        @inject HttpClient Http
+
+        <h1>Quotes</h1>
+
+        <div class="contentDiv">
+        <MudSimpleTable Style="overflow-x: auto;" Hover="true" Striped="true">
+            <thead>
+                <tr>
+                    <th>Insurance Type</th>
+                    <th>Amount per mont</th>
+                    <th>Quote</th>
+                    <th>Buy</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var quote in _quotes)
+            {
+            <tr>
+            <td>@quote.Key</td>
+            <td>@quote.Value</td>
+            <td><MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="() => GetQuote(quote.Key)">Get quote</MudButton></td>
+            <td><MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="() => Buy(quote.Key)">Buy this</MudButton></td>
+            </tr>
+            }
+        </tbody>
+        </MudSimpleTable>
+
+        @if (_hasError)
+        {
+            <MudAlert Severity="Severity.Error" >@_message</MudAlert>
+        }
+        else if (_hasSuccess)
+        {
+            <MudAlert Severity="Severity.Info">@_message</MudAlert>
+        }
+
+        </div>
+
+        @if (_isLoading)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+        }
+
+        @code {
+
+            private Dictionary<string, decimal?> _quotes = new();
+            private bool _hasError = false;
+            private bool _hasSuccess = false;
+            private bool _isLoading = false;
+            private string? _message;
+
+
+            protected override void OnInitialized()
+            {
+                foreach (var insuranceType in Enum.GetNames(typeof(InsuranceType)))
+                {
+                    _quotes.Add(insuranceType, null);
+                }
+
+                base.OnInitialized();
+            }
+
+            private async Task GetQuote(string insuranceType)
+            {
+                try
+                {
+                    _isLoading = true;
+                    _hasError = false;
+                    _hasSuccess = false;
+
+                    var quote = await Http.GetFromJsonAsync<Quote>($"insurance/quote?insuranceType={insuranceType}");
+                    _quotes[insuranceType] = quote.AmountPerMonth;
+                }
+                catch (AccessTokenNotAvailableException exception)
+                {
+                    exception.Redirect();
+                }
+                catch (Exception ex)
+                {
+                    _hasError = true;
+                    _message = ex.Message;
+                }
+                finally
+                {
+                    _isLoading = false;
+                }
+            }
+
+            private async Task Buy(string insuranceType)
+            {
+                try
+                {
+                    _hasError = false;
+                    _hasSuccess = false;
+                    _isLoading = true;
+                    _message = null;
+
+                    var it = (InsuranceType)Enum.Parse(typeof(InsuranceType), insuranceType);
+                    if (_quotes.TryGetValue(insuranceType, out var amount) && amount.HasValue)
+                    {
+                        var response = await Http.PostAsJsonAsync<Quote>($"insurance", new Quote(null, it, amount.Value));
+                        response.EnsureSuccessStatusCode();
+                        _message = $"Bought {insuranceType} insurance for {amount.Value}€ per month.";
+                        _hasSuccess = true;
+                    }
+                    else
+                    {
+                        _message = "Get a quote first!";
+                        _hasError = true;
+                        
+                    }
+                }
+                catch (AccessTokenNotAvailableException exception)
+                {
+                    exception.Redirect();
+                }
+                catch (Exception ex)
+                {
+                    _hasError = true;
+                    _message = ex.Message;
+                }
+                finally
+                {
+                    _isLoading = false;
+                }
+            }
+        }
+        ```
+
+    - Open the file 'Shared\NavMenu.razor' to add the new components to the menu.
+    Change this:
+    ```html
+        <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+            <nav class="flex-column">
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="oi oi-home" aria-hidden="true"></span> Home
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="counter">
+                        <span class="oi oi-plus" aria-hidden="true"></span> Counter
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="fetchdata">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
+                    </NavLink>
+                </div>
+            </nav>
+        </div>
+    ```
+    into this":
+    ```html
+        <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+            <nav class="flex-column">
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="oi oi-home" aria-hidden="true"></span> Home
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="insurances">
+                        <span class="oi oi-plus" aria-hidden="true"></span> My insurances
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="quotes">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> My quotes
+                    </NavLink>
+                </div>
+            </nav>
+        </div>
+    ```
+
+## Using our prepared 'Xpirit Insurance' demo environment
 
 The easiest option to get started is to run the source code included in this repo. It works straight out of the box.
 You can find it in the `src` folder. You can also use this as a reference if you get stuck somewhere.
