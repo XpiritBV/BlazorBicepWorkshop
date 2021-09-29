@@ -9,16 +9,18 @@
 - Install [.NET 6](https://dotnet.microsoft.com/download/dotnet/6.0)
 - If you don't have an Azure Subscription, install [Azurite](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio#install-and-run-azurite) 
 
-### Get or Create Project
+# Building the Application
 
-#### Option 1 - Using your own environment
+## Option 1 - Using your own Azure AD B2C environment
 
 > Please note that this option will take you about 15 minutes to complete.
 
 - Follow the [walkthrough](https://docs.microsoft.com/en-us/azure/active-directory-b2c/tutorial-create-tenant) to create a new Azure AD B2C Tenant.
 - Follow the [walkthrough](https://docs.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/hosted-with-azure-active-directory-b2c?view=aspnetcore-6.0) to create the initial Blazor project.
 
-#### Option 2 - Using our prepared 'Xpirit Insurance' demo environment
+Continue with the steps from option 2.
+
+## Option 2 - Using our 'Xpirit Insurance' demo Azure AD B2C environment
 
 > This option will get you started quickly, but includes some manual work.
 
@@ -32,9 +34,9 @@ dotnet new blazorwasm -au IndividualB2C --aad-b2c-instance "https://xpiritinsura
 
 This will scaffold a new solution, configured to use the Xpirit Insurance demo Azure AD B2C environment.
 
-##### Modify before running
+### Required modifications
 
-1. Launch Settings
+**1. Launch Settings**
 
     Open the file `launchsettings.json` in the 'Server' project:
 
@@ -53,7 +55,7 @@ This will scaffold a new solution, configured to use the Xpirit Insurance demo A
     "applicationUrl": "https://localhost:5001;http://localhost:5000",
     ```
 
-2. Program.cs
+**2. Program.cs**
 Open the file `Program.cs` in the 'Client project:
 
     ```
@@ -81,7 +83,7 @@ Open the file `Program.cs` in the 'Client project:
         });
     ```
 
-3. Client Project file
+**3. Client Project file**
 
     Modify the project file 'XpiritInsurance.Client.csproj' and exempt the reference `Microsoft.Authentication.WebAssembly.Msal' from trimming.
 
@@ -106,7 +108,7 @@ Open the file `Program.cs` in the 'Client project:
     </ItemGroup>
     ```
 
-4. API Controller Scopes
+**4. API Controller Scopes**
 
     In the 'Server' project, open the file ''.
     Change the attribute code from:
@@ -142,10 +144,181 @@ Open the file `Program.cs` in the 'Client project:
         "Scopes": "API.Access"
     },
     ```
-#### Option 3 - Using our prepared 'Xpirit Insurance' demo environment
+
+    > Your project should now compile and run without errors. Use `dotnet run` from the 'Server' project to ensure everything works.
+
+### Adding custom code
+
+**1. Adding custom code to the Web API**
+
+    We will now change the scaffolded code, to create some insurance selling functionality.
+    To do this, we will add a Web API controller that can serve insurance quotes, and be used to purchase & view insurances.
+
+    Open the folder 'XpiritInsurance.Shared' and add these files:
+
+    - Insurance.cs
+        ```csharp
+        namespace XpiritInsurance.Shared;
+        public record Insurance(InsuranceType InsuranceType, decimal AmountPerMonth);
+        ```
+    - InsuranceType.cs
+        ```csharp
+        namespace XpiritInsurance.Shared;
+        public enum InsuranceType { House, Boat, Health }
+        ```
+    - Quote.cs
+        ```csharp
+        namespace XpiritInsurance.Shared;
+        public record Quote(string UserName, InsuranceType InsuranceType, decimal AmountPerMonth);
+        ```
+
+    Open the folder 'XpiritInsurance.Server' and add these files:
+
+    - Controllers\InsuranceController.cs
+        ```csharp
+        using System.Net;
+        using Microsoft.AspNetCore.Authorization;
+        using Microsoft.AspNetCore.Mvc;
+        using Microsoft.Identity.Web;
+        using Microsoft.Identity.Web.Resource;
+        using XpiritInsurance.Server.Services;
+        using XpiritInsurance.Shared;
+
+        namespace XpiritInsurance.Server.Controllers;
+
+        [RequiredScope(RequiredScopesConfigurationKey = "AzureAdB2C:Scopes")]
+        [ApiController]
+        [Route("[controller]")]
+        public class InsuranceController : ControllerBase
+        {
+            private readonly ILogger<InsuranceController> _logger;
+            private readonly QuoteAmountService _quoteAmountService;
+            private readonly InsuranceService _insuranceService;
+
+            public InsuranceController(ILogger<InsuranceController> logger, QuoteAmountService quoteAmountService, InsuranceService insuranceService)
+            {
+                _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+                _quoteAmountService = quoteAmountService ?? throw new ArgumentNullException(nameof(quoteAmountService));
+                _insuranceService = insuranceService ?? throw new ArgumentNullException(nameof(insuranceService));
+            }
+
+            [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(IEnumerable<Insurance>))]
+            [HttpGet]
+            public async Task<IActionResult> GetInsurances()
+            {
+                string userName = HttpContext.User.GetDisplayName();
+                var insurances = await _insuranceService.GetInsurances(userName);
+                return Ok(insurances);
+            }
+
+            [ProducesDefaultResponseType]
+            [HttpPost]
+            public async Task<IActionResult> BuyInsurance(Quote quote)
+            {
+                string userName = HttpContext.User.GetDisplayName();
+                decimal amount = quote.AmountPerMonth;
+                if (amount < 5 || amount > 150)
+                {
+                    amount = await _quoteAmountService.CalculateQuote(userName, quote.InsuranceType);
+                }
+                await _insuranceService.AddInsurance(quote with { UserName = userName, AmountPerMonth = amount });
+
+                _logger.LogInformation("Sold insurance {InsuranceType} to user {UserName} for {AmountPerMonth}", quote.InsuranceType, userName, amount);
+                return Ok();
+            }
+
+            [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(Quote))]
+            [HttpGet("quote")]
+            public async Task<IActionResult> CalculateQuote(InsuranceType insuranceType)
+            {
+                string userName = HttpContext.User.GetDisplayName();
+                decimal amount = await _quoteAmountService.CalculateQuote(userName, insuranceType);
+
+                return Ok(new Quote(userName, insuranceType, amount));
+            }
+        }
+    ```
+
+    > Create a folder named 'Services' in the root of the project. (So, at the same level of the 'Controllers' folder)
+    > Add a Nuget Package reference to include 'Microsoft.Experimental.Collections':
+    ```
+    cd .\Server
+    dotnet add package Microsoft.Experimental.Collections -v 1.0.6-e190117-3
+    ```
+
+    - Services\InsuranceService.cs
+        ```csharp
+        using Microsoft.Collections.Extensions;
+        using XpiritInsurance.Shared;
+        namespace XpiritInsurance.Server.Services;
+
+        public class InsuranceService
+        {
+            private readonly MultiValueDictionary<string, Insurance> Data = new()
+            {
+                { "user 01", new Insurance(InsuranceType.Boat, 15) } //add some seed data
+            };
+
+            public Task<IReadOnlyCollection<Insurance>> GetInsurances(string userName)
+            {
+                IReadOnlyCollection<Insurance> result = Array.Empty<Insurance>();
+                if (Data.TryGetValue(userName, out var insurances))
+                {
+                    result = insurances;
+                }
+                return Task.FromResult(result);
+            }
+
+            public virtual Task<IReadOnlyCollection<Insurance>> AddInsurance(Quote quote)
+            {
+                if (Data.TryGetValue(quote.UserName, out var insurances) && insurances.Any(i => i.InsuranceType == quote.InsuranceType))
+                {
+                    var existing = insurances.Single(i => i.InsuranceType == quote.InsuranceType);
+                    var copy = existing with
+                    {
+                        AmountPerMonth = quote.AmountPerMonth
+                    };
+                    Data.Remove(quote.UserName, existing);
+                }
+
+
+                Data.Add(quote.UserName, new Insurance(quote.InsuranceType, quote.AmountPerMonth));
+                return GetInsurances(quote.UserName);
+            }
+        }
+        ```
+    - Services\QuoteAmountService.cs
+        ```csharp
+        using XpiritInsurance.Shared;
+        namespace XpiritInsurance.Server.Services;
+
+        public class QuoteAmountService
+        {
+            public virtual Task<decimal> CalculateQuote(string userName, InsuranceType insuranceType)
+            {
+                decimal amount = 0M;
+                switch (insuranceType)
+                {
+                    case InsuranceType.House:
+                        amount = new Random().Next(30, 70);
+                        break;
+                    case InsuranceType.Boat:
+                        amount = new Random(Guid.NewGuid().GetHashCode()).Next(5, 15);
+                        break;
+                    case InsuranceType.Health:
+                        amount = new Random(Guid.NewGuid().GetHashCode()).Next(79, 150);
+                        break;
+                }
+
+                return Task.FromResult<decimal>(amount);
+            }
+        }
+        ```
+
+#### Using our prepared 'Xpirit Insurance' demo environment
 
 The easiest option to get started is to run the source code included in this repo. It works straight out of the box.
-You can find it in the `src` folder.
+You can find it in the `src` folder. You can also use this as a reference if you get stuck somewhere.
 
 ## Testing your code
 
