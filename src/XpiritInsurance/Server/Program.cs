@@ -16,6 +16,12 @@ builder.Services.AddRazorPages();
 builder.Services.AddSingleton<XpiritInsurance.Server.Services.QuoteAmountService>();
 builder.Services.AddSingleton<XpiritInsurance.Server.Services.InsuranceService>();
 
+//add queue service
+string storageQueueConnectionString = builder.Configuration["storageAccountConnectionString"];
+if (!string.IsNullOrEmpty(storageQueueConnectionString))
+{
+    builder.Services.AddSingleton(new Azure.Storage.Queues.QueueClient(storageQueueConnectionString, "insurance"));
+}
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

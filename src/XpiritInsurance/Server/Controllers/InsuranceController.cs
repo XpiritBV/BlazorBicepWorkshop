@@ -1,5 +1,5 @@
 ﻿using System.Net;
-using Microsoft.AspNetCore.Authorization;
+using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
@@ -16,12 +16,14 @@ public class InsuranceController : ControllerBase
     private readonly ILogger<InsuranceController> _logger;
     private readonly QuoteAmountService _quoteAmountService;
     private readonly InsuranceService _insuranceService;
+    private readonly QueueClient? _queueClient;
 
-    public InsuranceController(ILogger<InsuranceController> logger, QuoteAmountService quoteAmountService, InsuranceService insuranceService)
+    public InsuranceController(ILogger<InsuranceController> logger, QuoteAmountService quoteAmountService, InsuranceService insuranceService, QueueClient? queueClient)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _quoteAmountService = quoteAmountService ?? throw new ArgumentNullException(nameof(quoteAmountService));
         _insuranceService = insuranceService ?? throw new ArgumentNullException(nameof(insuranceService));
+        _queueClient = queueClient;
     }
 
     [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(IEnumerable<Insurance>))]
@@ -43,8 +45,11 @@ public class InsuranceController : ControllerBase
         {
             amount = await _quoteAmountService.CalculateQuote(userName, quote.InsuranceType);
         }
-        await _insuranceService.AddInsurance(quote with { UserName = userName, AmountPerMonth = amount });
-
+        var insurance = await _insuranceService.AddInsurance(quote with { UserName = userName, AmountPerMonth = amount });
+        if (_queueClient != null)
+        {
+            await _queueClient.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(insurance));
+        }
         _logger.LogInformation("Sold insurance {InsuranceType} to user {UserName} for {AmountPerMonth}", quote.InsuranceType, userName, amount);
         return Ok();
     }
