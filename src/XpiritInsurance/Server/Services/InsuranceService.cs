@@ -7,7 +7,9 @@ public class InsuranceService
 {
     private readonly MultiValueDictionary<string, Insurance> Data = new()
     {
-        { "user 01", new Insurance(InsuranceType.Boat, 15) } //add some seed data
+        { "user 01", new Insurance(InsuranceType.Boat, 15) },
+        { "user 02", new Insurance(InsuranceType.House, 50) }
+        //add some seed data
     };
 
     public Task<IReadOnlyCollection<Insurance>> GetInsurances(string userName)
@@ -20,7 +22,7 @@ public class InsuranceService
         return Task.FromResult(result);
     }
 
-    public virtual Task<IReadOnlyCollection<Insurance>> AddInsurance(Quote quote)
+    public virtual Task<Insurance> AddInsurance(Quote quote)
     {
         if (Data.TryGetValue(quote.UserName, out var insurances) && insurances.Any(i => i.InsuranceType == quote.InsuranceType))
         {
@@ -33,7 +35,8 @@ public class InsuranceService
         }
 
 
-        Data.Add(quote.UserName, new Insurance(quote.InsuranceType, quote.AmountPerMonth));
-        return GetInsurances(quote.UserName);
+        Insurance insurance = new Insurance(quote.InsuranceType, quote.AmountPerMonth);
+        Data.Add(quote.UserName, insurance);
+        return Task.FromResult(insurance);
     }
 }

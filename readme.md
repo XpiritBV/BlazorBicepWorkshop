@@ -253,7 +253,9 @@ Open the folder 'XpiritInsurance.Server' and add these files:
     {
         private readonly MultiValueDictionary<string, Insurance> Data = new()
         {
-            { "user 01", new Insurance(InsuranceType.Boat, 15) } //add some seed data
+            { "user 01", new Insurance(InsuranceType.Boat, 15) },
+            { "user 02", new Insurance(InsuranceType.House, 50) }
+            //add some seed data
         };
 
         public Task<IReadOnlyCollection<Insurance>> GetInsurances(string userName)
@@ -266,7 +268,7 @@ Open the folder 'XpiritInsurance.Server' and add these files:
             return Task.FromResult(result);
         }
 
-        public virtual Task<IReadOnlyCollection<Insurance>> AddInsurance(Quote quote)
+        public virtual Task<Insurance> AddInsurance(Quote quote)
         {
             if (Data.TryGetValue(quote.UserName, out var insurances) && insurances.Any(i => i.InsuranceType == quote.InsuranceType))
             {
@@ -279,8 +281,9 @@ Open the folder 'XpiritInsurance.Server' and add these files:
             }
 
 
-            Data.Add(quote.UserName, new Insurance(quote.InsuranceType, quote.AmountPerMonth));
-            return GetInsurances(quote.UserName);
+            Insurance insurance = new Insurance(quote.InsuranceType, quote.AmountPerMonth);
+            Data.Add(quote.UserName, insurance);
+            return Task.FromResult(insurance);
         }
     }
     ```
@@ -638,8 +641,76 @@ Change this:
 > Check if everything works by running the project, logging in, getting a quote and buying the insurance.
 
 ## Add Storage Queue
-PM> cd ..\Server
-PM> dotnet add package Azure.Storage.Queues
+
+### 1. Server Project
+You will now modify the Web API code to send a message to an Azure Storage Queue whenever a new insurance is sold. This way, remote systems can process the information.
+
+- In the Server project, add a Nuget package to enable use of Azure Storage Queues:
+
+    ```
+    cd .\Server
+    dotnet add package Azure.Storage.Queues
+    dotnet add package Microsoft.Extensions.Azure
+    ```
+- Open 'Program.cs'
+
+    Change `Program.cs` to add a StorageQueue client to Dependency Injection, at line 19, below the mock services you added earlier:
+
+    ```csharp
+    //add queue service
+    string storageQueueConnectionString = builder.Configuration["storageAccountConnectionString"];
+    if (!string.IsNullOrEmpty(storageQueueConnectionString))
+    {
+        builder.Services.AddSingleton(new Azure.Storage.Queues.QueueClient(storageQueueConnectionString, "insurance"));
+    }
+    ```
+
+- Open 'Controllers\InsuranceController.cs'.
+
+    Replace the method 'BuyInsurance' with this, to send a message to the Storage Queue whenever an insurance is sold:
+
+    ```csharp
+    [ProducesDefaultResponseType]
+    [HttpPost]
+    public async Task<IActionResult> BuyInsurance(Quote quote)
+    {
+        string userName = HttpContext.User.GetDisplayName();
+        decimal amount = quote.AmountPerMonth;
+        if (amount < 5 || amount > 150)
+        {
+            amount = await _quoteAmountService.CalculateQuote(userName, quote.InsuranceType);
+        }
+        var insurance = await _insuranceService.AddInsurance(quote with { UserName = userName, AmountPerMonth = amount });
+        if (_queueClient != null)
+        {
+            await _queueClient.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(insurance));
+        }
+        _logger.LogInformation("Sold insurance {InsuranceType} to user {UserName} for {AmountPerMonth}", quote.InsuranceType, userName, amount);
+        return Ok();
+    }
+    ```
+
+- In the same file, replace the constructor and field declarations with this code, to get a QueueClient object injected, and to save it for later use.
+
+    ```csharp
+    private readonly ILogger<InsuranceController> _logger;
+    private readonly QuoteAmountService _quoteAmountService;
+    private readonly InsuranceService _insuranceService;
+    private readonly QueueClient? _queueClient;
+
+    public InsuranceController(ILogger<InsuranceController> logger, QuoteAmountService quoteAmountService, InsuranceService insuranceService, QueueClient? queueClient)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _quoteAmountService = quoteAmountService ?? throw new ArgumentNullException(nameof(quoteAmountService));
+        _insuranceService = insuranceService ?? throw new ArgumentNullException(nameof(insuranceService));
+        _queueClient = queueClient;
+    }
+    ```
+- Using Visual Studio, configure the project for user secrets. Add a secret named 'storageAccountConnectionString' and put in the connection string provided by the proctor.
+Alternatively, you can use an environment variable in the 'Properties\launchSettings.json' file, on line 19. 
+> Make sure that this secret is not checked into the repository.
+
+- Run and test the program to see if everything works. Ask the proctor to check the Storage Queue.
 
 ## Using our prepared 'Xpirit Insurance' demo environment
 
@@ -697,10 +768,12 @@ Zip the output for simple deployment:
 
 ```
 # Bash
-zip -r package.zip \projects\clubcloud\XpiritInsurance\Server\bin\Release\net6.0\publish\
+cd bin/Release/net6.0/publish   
+zip -r package.zip ./*
 
 # PowerShell
-Compress-Archive -Path d:\projects\clubcloud\XpiritInsurance\Server\bin\Release\net6.0\publish\* -DestinationPath package.zip -Force
+cd bin\Release\net6.0\publish\
+Compress-Archive -Path .\* -DestinationPath package.zip -Force
 
 ```
 
