@@ -1,20 +1,13 @@
-# Club Cloud workshop
+# Building a modern web application using Blazor
 
+In this lab we will first create a new Blazor application. It will be an application that authenticates with Azure AD B2C (hosted by Xpirit) and it uses an Azure Store account (also hosted by Xpirit) or [Azurite](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio#install-and-run-azurite).
 
-## Getting started
-
-### Tools
-
-- Install [Visual Studio Code](https://code.visualstudio.com/download) or [Visual Studio 2019/2022](https://visualstudio.microsoft.com/downloads/).  
-- Install [.NET 6](https://dotnet.microsoft.com/download/dotnet/6.0)
-- If you don't have an Azure Subscription, install [Azurite](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio#install-and-run-azurite) 
-
-# Building the Application
-In this lab we will first create a new Blazor application. It will be an application that authenticates with Azure AD B2C (hosted by Xpirit).
+## Prerequisites
+Make sure you have completed [Lab 1 - Getting started](Lab1-GetttingStarted.md)
 
 ## Prepare a workspace
 
-> This option will get you started quickly, but includes some manual work.
+> This option will get you started quickly, but includes some manual work. Alternatively, you can use the completed solution in this repo and deploy it to Azure in [Lab 3 - Infrastructure as Code using Bicep](Lab3-Bicep.md)
 
 - Create a new folder to host the project. E.g. `d:\projects\clubcloud`
 - Open a terminal and navigate to the folder. E.g. `cd d:\projects\clubcloud`
@@ -24,14 +17,20 @@ In this lab we will first create a new Blazor application. It will be an applica
 dotnet new blazorwasm -au IndividualB2C --aad-b2c-instance "https://xpiritinsurance.b2clogin.com/" --api-client-id "3b551417-548e-4e8e-80c3-44bb06f3aa64" --app-id-uri "3b551417-548e-4e8e-80c3-44bb06f3aa64" --client-id "e280fc38-2898-4fad-baaf-fbeb1d306bd1" --default-scope "API.Access" --domain "xpiritinsurance.onmicrosoft.com" -ho -o XpiritInsurance -ssp "B2C_1_UserFlowSuSi"
 ```
 
-This will scaffold a new solution, configured to use the Xpirit Insurance demo Azure AD B2C environment.
+> This will scaffold a new Blazor solution, configured to use the Xpirit Insurance demo Azure AD B2C environment.
 Move your terminal to the root folder of the generated project before continuing.
 
 ## Required modifications
 
+You will now change the scaffolded code to look like a (very basic) insurance selling web site.
+Please examine the generated code, you should see a folder named 'XpiritInsurance', inside the folder, you should see 3 subfolders.
+1. Client - This folder contains the code that will be executed in the browser of the end user. It contains screens and logic that calls Web API's.
+2. Server - This folder contains the code that will run on the server. It contains Web API controllers.
+3. Shared - This folder contains code that is accessible for both the Client and the Server. It holds shared class definitions.
+
 ### 1. Edit Launch Settings
 
-Our Azure AD B2C tenant is configured to accept certain predefined URL's to return tokens to. To comply with this, you will need to adjust the port that the website uses.
+Our Xpirit hosted Azure AD B2C tenant is configured to accept certain predefined URL's to return tokens to. To comply with this, you will need to adjust the port that the website uses.
 Open the file `Properties\launchsettings.json` in the 'Server' project:
 
 ```
@@ -49,6 +48,8 @@ into:
 "applicationUrl": "https://localhost:5001;http://localhost:5000",
 ```
 
+> Notice the updated port numbers.
+
 ### 2. Configure Web API Controller Scopes
 
 In the 'Server' project, open the file 'Controllers\WeatherForecastController.cs'.
@@ -62,6 +63,7 @@ into:
 ```csharp
 [RequiredScope(RequiredScopesConfigurationKey = "AzureAdB2C:Scopes")]
 ```
+> Notice the changed configuration section name.
 
 In the same project change the configuration to define the required API scope. Modify the file 'appsettings.json' from:
 
@@ -87,6 +89,7 @@ into this:
     "Scopes": "API.Access"
 },
 ```
+> Notice the added `Scopes` value.
 
 ### 3. Modify the Client App
 Open the file `Program.cs` in the 'Client project:
@@ -115,6 +118,7 @@ Open the file `Program.cs` in the 'Client project:
             options.ProviderOptions.LoginMode = "redirect";
         });
     ```
+> Notice the added line to configure `redirect` as `LoginMode`.
 
 ### 2. Blazor Client Project
 
@@ -140,14 +144,29 @@ Open the file `Program.cs` in the 'Client project:
         <TrimmerRootAssembly Include="Microsoft.Authentication.WebAssembly.Msal"  />
     </ItemGroup>
     ```
+> Notice the added `TrimmerRootAssembly` line to ensure Msal is included in the published output.
 
-> Your project should now compile and run without errors. Use `dotnet run` from the 'Server' project to ensure everything works.
+### 3. Test your code
+Your project should now compile and run without errors. Use `dotnet run` from the 'Server' project to ensure everything works.
+
+#### Visual Studio
+Start debugging by pressing F5 or select `Start debugging` from the `Debug` menu. Or select the option to run without debugging.
+
+#### VS Code
+- Open the terminal
+- Navigate to the 'Server' project and run the project:
+
+    ```
+    cd d:\projects\clubcloud\XpiritInsurance\Server
+
+    dotnet run
+    ```
 
 ## Adding custom code
 We will now change the scaffolded code, to create some insurance selling functionality.
 To do this, we will add a Web API controller that can serve insurance quotes, and be used to purchase & view insurances.
 
-### 1. Add Shared code
+### 1. Add shared code to the 'Shared' project
 > The 'Shared' project contains code that is available to both Client and Server. This is a great place to store objects that are serialized and sent over the network from client to server or v.v.
 
 Open the folder 'XpiritInsurance.Shared' and add these files:
@@ -168,8 +187,8 @@ Open the folder 'XpiritInsurance.Shared' and add these files:
     public record Quote(string? UserName, InsuranceType InsuranceType, decimal AmountPerMonth);
     ```
 
-### 2. Add Web API code
-- Create a folder named 'Services' in the root of the project. (So, at the same level of the 'Controllers' folder)
+### 2. Add Web API code to the 'Server' project
+- Create a folder named 'Services' in the root of the 'Server' project. Make sure that it is created at the same level of the 'Controllers' folder that is already present.
 - Add a Nuget Package reference to include 'Microsoft.Experimental.Collections':
 ```
 cd .\Server
@@ -325,7 +344,9 @@ Open the folder 'XpiritInsurance.Server' and add these files:
     > Your project should now compile and run without errors. Use `dotnet run` from the 'Server' project to ensure everything works.
 
 
-### 3. Add Blazor Frontend code
+### 3. Add Blazor Frontend code to the 'Client' project
+
+#### 3.1 Configure MudBlazor library
 
 - Add the MudBlazor Nuget package to the Client project for some nice UI components:
     ```
@@ -339,9 +360,11 @@ Open the folder 'XpiritInsurance.Server' and add these files:
     @using MudBlazor
     ```
 
-- Open the existing file 'App.razor' in the Client folder, and register MudBlazor components, by adding these lines in the bottom of the file, **after** the **closing** element named `</CascadingAuthenticationState`:
+- Open the existing file 'App.razor' in the Client folder, and register MudBlazor components, by adding these MudBlazor Providers at the bottom of the file, **after** the element named `</CascadingAuthenticationState>`:
 
-    ```csharp
+    ```xml
+    <CascadingAuthenticationState>..</CascadingAuthenticationState>
+
     <MudThemeProvider/>
     <MudDialogProvider/>
     <MudSnackbarProvider/>
@@ -353,7 +376,7 @@ Open the folder 'XpiritInsurance.Server' and add these files:
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     ```
-    Add this snippet to the end `body` section:
+- Next, add this snippet to the end `body` section:
     ```
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     ```
@@ -366,6 +389,8 @@ Open the folder 'XpiritInsurance.Server' and add these files:
     //line 25:
     builder.Services.AddMudServices();
     ```
+
+#### 3.2 Add UI components
 
 We will now add some User Interface components that interact with the Web API's to allow users to buy insurance.
 The first page will fetch a user's existing insurances from the API and display them.
@@ -593,7 +618,7 @@ The second page will fetch quotes for new insurances from the API and display th
     ```
 
 - Open the file 'Shared\NavMenu.razor' to add the new components to the menu.
-Change this:
+Change the code from this:
     ```html
     <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
         <nav class="flex-column">
@@ -637,13 +662,17 @@ Change this:
         </nav>
     </div>
     ```
+    > Notice the changed menu item URLs.
 
-> Check if everything works by running the project, logging in, getting a quote and buying the insurance.
+### 4. Check it
+
+Check if everything works by running the project, logging in, getting a quote and buying the insurance.
 
 ## Add Storage Queue
+If everything works properly, you can add some Cloud functionality to the app.
 
 ### 1. Server Project
-You will now modify the Web API code to send a message to an Azure Storage Queue whenever a new insurance is sold. This way, remote systems can process the information.
+You will now modify the Web API code in the 'Server' project, to send a message to an Azure Storage Queue whenever a new insurance is sold. This way, remote systems can process the information.
 
 - In the Server project, add a Nuget package to enable use of Azure Storage Queues:
 
@@ -706,32 +735,18 @@ You will now modify the Web API code to send a message to an Azure Storage Queue
         _queueClient = queueClient;
     }
     ```
+
 - Using Visual Studio, configure the project for user secrets. Add a secret named 'storageAccountConnectionString' and put in the connection string provided by the proctor.
 Alternatively, you can use an environment variable in the 'Properties\launchSettings.json' file, on line 19. 
-> Make sure that this secret is not checked into the repository.
+> Make sure that this secret is not checked into the repository. It would be much better to use Managed Identity in this situation. We will leave this as a challenge for you, once you complete this Lab.
 
-- Run and test the program to see if everything works. Ask the proctor to check the Storage Queue.
+### 2. Check it
+Run and test the program to see if everything works. Ask the proctor to check the Storage Queue.
 
-## Using our prepared 'Xpirit Insurance' demo environment
+## Cheating - Using our prepared 'Xpirit Insurance' demo environment
 
-The easiest option to get started is to run the source code included in this repo. It works straight out of the box.
+The easiest option to get started is to run the source code included in this repo. It works straight out of the box. You can also use the sample code if you get stuck during the Lab.
 You can find it in the `src` folder. You can also use this as a reference if you get stuck somewhere.
-
-## Testing your code
-
-### VS Code
-- Open the terminal
-- Navigate to the 'Server' project ``
-- Run the project:
-
-```
-cd d:\projects\clubcloud\XpiritInsurance\Server
-
-dotnet run
-```
-
-### Visual Studio
-Start debugging by pressing F5 or select `Start debugging` from the `Debug` menu. Or select the option to run without debugging.
 
 ### Logging in
 Create a test account in your own B2C environment, and attempt to log in. 
