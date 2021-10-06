@@ -32,6 +32,9 @@ You can get a head-start before attending the workshop by making sure you have t
 - Install [Visual Studio Code](https://code.visualstudio.com/download) or [Visual Studio 2019 / 2022](https://visualstudio.microsoft.com/downloads/).  
 - Add the Blazor extension 'ms-dotnettools.blazorwasm-companion'
 - Install [.NET 6](https://dotnet.microsoft.com/download/dotnet/6.0)
+- Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- Install [Bicep](https://github.com/Azure/bicep/blob/main/docs/installing.md#install-and-manage-via-azure-cli-easiest)
+- Install [Bicep VS Code extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-bicep)
 
 ### Azure 
 - For the second part of the workshop, you will need an Azure subscription. If you don't have an Azure Subscription, install [Azurite](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio#install-and-run-azurite).

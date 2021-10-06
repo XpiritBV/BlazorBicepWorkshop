@@ -9,7 +9,7 @@ Goals for this lab:
 - [Publish your code to Azure](#publishcode)
 
 ## Prerequisites
-Make sure you have completed [Lab 1 - Getting Started](Lab1-GettingStarted.md)
+Make sure you have completed [Lab 2 - Building a modern web application using Blazor](Lab2-Blazor.md)
 
 ## <a name="queue"></a> Creating the Queue
 This workshop uses an Azure Storage Queue as its messaging service. That requires us to create an Azure Storage Account. Create a new file called main.bicep. The Bicep VS Code extension that you installed can help create resources as it provides a lot of snippets. Type 'stor' and the extension should provide you with a snippet.
