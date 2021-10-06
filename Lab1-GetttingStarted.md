@@ -8,6 +8,7 @@ You can get a head-start before attending the workshop by making sure you have t
 
 ### Tools
 - Install [Visual Studio Code](https://code.visualstudio.com/download) or [Visual Studio 2019 / 2022](https://visualstudio.microsoft.com/downloads/).  
+- Add the Blazor extension 'ms-dotnettools.blazorwasm-companion'
 - Install [.NET 6](https://dotnet.microsoft.com/download/dotnet/6.0)
 
 ### Azure 
