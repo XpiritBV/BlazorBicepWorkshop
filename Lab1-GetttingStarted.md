@@ -1,7 +1,29 @@
-# Club Cloud workshop
+# Building a modern web application on Azure, using Blazor and Bicep
 
-Welcome to the Club Cloud workshop featuring Blazor and Bicep.
-In this workshop we will build a modern web application, using Blazor and .NET 6. Once completed, we will create Azure infrastructure by using Bicep, and run the Blazor app in the Cloud.
+This workshop will help you get started building Cloud-native software and Infrastructure as Code for your own projects!
+
+You will build a modern web application, using Blazor and .NET 6. Once completed, you will create Azure infrastructure by using Bicep, and run the Blazor app in the Cloud.
+
+## Required knowledge
+Even though this is an introductory workshop, you will need to bring some experience using C# and a basic understanding of the resource model of Azure.
+
+## What you will learm
+In the morning, you will learn how to create a basic Blazor web app, that uses an Identity Provider to authenticate users and integrates with a message queue inside Azure. The source code will also feature some new C# features.
+In the afternoon, you will learn how to use Infrastructure as Code to create the infrastructure needed to run the Blazor web app. 
+
+This workshop will help you get started building cloud native software and Infrastructure as Code for your own projects!
+
+## Agenda
+- Morning programme
+    - 9:30 - Welcome
+    - 10:00 - Quick intro to Blazor
+    - 10:30 - Hands-on Lab 2
+    - 12:00 - Quick intro to Bicep
+- Lunch 12:30 - 13:00
+- Afternoon programme
+    - 13:00 - Hands-on Lab 3
+    - 15:30 - Evaluation
+    - 16:00 - Drinks
 
 ## Getting Started
 You can get a head-start before attending the workshop by making sure you have the proper tools installed, and getting an Azure subscription.
