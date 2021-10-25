@@ -29,12 +29,16 @@ This workshop will help you get started building cloud native software and Infra
 You can get a head-start before attending the workshop by making sure you have the proper tools installed, and getting an Azure subscription.
 
 ### Tools
-- Install [Visual Studio Code](https://code.visualstudio.com/download) or [Visual Studio 2019 / 2022](https://visualstudio.microsoft.com/downloads/).  
-- Add the Blazor extension 'ms-dotnettools.blazorwasm-companion'
+- Install [Visual Studio Code](https://code.visualstudio.com/download) 
+- Lab 2 can also be completed with [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/)
+- Add Visual Studio Code extensions:
+  - Add the [C# extension 'ms-dotnettools.csharp'](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp)
+  - Add the [Blazor extension 'ms-dotnettools.blazorwasm-companion'](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.blazorwasm-companion)
+  - Install the [Bicep extension 'ms-azuretools.vscode-bicep'](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-bicep)
 - Install [.NET 6](https://dotnet.microsoft.com/download/dotnet/6.0)
 - Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
-- Install [Bicep](https://github.com/Azure/bicep/blob/main/docs/installing.md#install-and-manage-via-azure-cli-easiest)
-- Install [Bicep VS Code extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-bicep)
+- Install [Bicep](https://github.com/Azure/bicep/blob/main/docs/installing.md#install-and-manage-via-azure-cli-easiest) 
+  - Update the tools version if you had it installed: `az bicep upgrade`
 
 ### Azure 
 - For the second part of the workshop, you will need an Azure subscription. If you don't have an Azure Subscription, install [Azurite](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio#install-and-run-azurite).

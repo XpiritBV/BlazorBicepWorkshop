@@ -7,7 +7,7 @@ Make sure you have completed [Lab 1 - Getting started](Lab1-GetttingStarted.md)
 
 ## Prepare a workspace
 
-> This option will get you started quickly, but includes some manual work. Alternatively, you can use the completed solution in this repo and deploy it to Azure in [Lab 3 - Infrastructure as Code using Bicep](Lab3-Bicep.md)
+> This option will get you started quickly, but includes some manual work. Alternatively, you can use the completed solution in this repo and deploy it to Azure in [Lab 3 - Infrastructure as Code using Bicep](Lab3-Bicep.md). Note that by doing this, you will effectively skip this entire Lab.
 
 - Create a new folder to host the project. E.g. `d:\projects\clubcloud`
 - Open a terminal and navigate to the folder. E.g. `cd d:\projects\clubcloud`
@@ -20,22 +20,28 @@ dotnet new blazorwasm -au IndividualB2C --aad-b2c-instance "https://xpiritinsura
 > This will scaffold a new Blazor solution, configured to use the Xpirit Insurance demo Azure AD B2C environment.
 Move your terminal to the root folder of the generated project before continuing.
 
-## Required modifications
+## Changing the scaffolded code
 
 You will now change the scaffolded code to look like a (very basic) insurance selling web site.
-Please examine the generated code, you should see a folder named 'XpiritInsurance', inside the folder, you should see 3 subfolders.
-1. Client - This folder contains the code that will be executed in the browser of the end user. It contains screens and logic that calls Web API's.
-2. Server - This folder contains the code that will run on the server. It contains Web API controllers.
-3. Shared - This folder contains code that is accessible for both the Client and the Server. It holds shared class definitions.
+Please examine the generated code, you should see a folder named 'XpiritInsurance', inside the folder, you should see 3 subfolders containing 3 C# projects.
 
-### 1. Edit Launch Settings
+![](media/solutionlayout.png)
+
+1. **Client** - This folder contains the code that will be executed in the browser of the end user. It contains screens and logic that calls Web API's.
+2. **Server** - This folder contains the code that will run on the server. It contains Web API controllers.
+3. **Shared** - This folder contains code that is accessible for both the Client and the Server. It holds shared class definitions.
+
+### Modify the Server project
 
 Our Xpirit hosted Azure AD B2C tenant is configured to accept certain predefined URL's to return tokens to. To comply with this, you will need to adjust the port that the website uses.
-Open the file `Properties\launchsettings.json` in the 'Server' project:
+Open the file `Properties\launchsettings.json` in the 'Server' project, by using VS Code or Visual Studio 2022:
 
 ```
-code d:\projects\clubcloud\XpiritInsurance\Server\Properties\launchSettings.json
+cd XpiritInsurance
+code .
 ```
+
+Open the file '\Server\Properties\launchSettings.json'
 
 Modify the `applicationUrl` value on line 16, in the section named `XpiritInsurance`:
 
@@ -50,10 +56,10 @@ into:
 
 > Notice the updated port numbers.
 
-### 2. Configure Web API Controller Scopes
+#### Configure Web API Controller Scopes
 
-In the 'Server' project, open the file 'Controllers\WeatherForecastController.cs'.
-Change the attribute code from:
+Still inside the 'Server' project, open the file 'Controllers\WeatherForecastController.cs'.
+On line 11, change the attribute code from:
 
 ```csharp
 [RequiredScope(RequiredScopesConfigurationKey = "AzureAd:Scopes")]
@@ -91,85 +97,97 @@ into this:
 ```
 > Notice the added `Scopes` value.
 
-### 3. Modify the Client App
-Open the file `Program.cs` in the 'Client project:
+Delete comments from the JSON file if present.
 
-    ```
-    code d:\projects\clubcloud\XpiritInsurance\Client\Program.cs
-    ```
+```json
+/*
+The following identity settings need to be configured
+before the project can be successfully executed.
+For more info see https://aka.ms/dotnet-template-ms-identity-platform
+*/
+```
+### Modify the Client App
+Open the file `Program.cs` in the 'Client project.
 
-    Modify the `LoginMode` so users are redirected to login, instead of showing a pop-up window:
+Modify the `LoginMode` so users are redirected to login, instead of showing a pop-up window:
 
-    Change:
-    ```csharp
-        builder.Services.AddMsalAuthentication(options =>
-        {
-            builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-            options.ProviderOptions.DefaultAccessTokenScopes.Add("https://xpiritinsurance.onmicrosoft.com/3b551417-548e-4e8e-80c3-44bb06f3aa64/API.Access");
-        });
-    ```
-    into: 
+Change:
+```csharp
+builder.Services.AddMsalAuthentication(options =>
+{
+    builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
+    options.ProviderOptions.DefaultAccessTokenScopes.Add("https://xpiritinsurance.onmicrosoft.com/3b551417-548e-4e8e-80c3-44bb06f3aa64/API.Access");
+});
+```
+into: 
 
-    ```csharp
-        builder.Services.AddMsalAuthentication(options =>
-        {
-            builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-            options.ProviderOptions.DefaultAccessTokenScopes.Add("https://xpiritinsurance.onmicrosoft.com/3b551417-548e-4e8e-80c3-44bb06f3aa64/API.Access");
-            options.ProviderOptions.LoginMode = "redirect";
-        });
-    ```
-> Notice the added line to configure `redirect` as `LoginMode`.
+```csharp
+builder.Services.AddMsalAuthentication(options =>
+{
+    builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
+    options.ProviderOptions.DefaultAccessTokenScopes.Add("https://xpiritinsurance.onmicrosoft.com/3b551417-548e-4e8e-80c3-44bb06f3aa64/API.Access");
+    options.ProviderOptions.LoginMode = "redirect";
+});
+```
 
-### 2. Blazor Client Project
+> Notice the added line to configure `redirect` as `LoginMode` on line 20.
 
-    Modify the project file 'XpiritInsurance.Client.csproj' and exempt the reference `Microsoft.Authentication.WebAssembly.Msal' from trimming by adding a new element named `TrimmerRootAssembly` at the bottom of the section.
+Modify the project file 'XpiritInsurance.Client.csproj' and exempt the reference `Microsoft.Authentication.WebAssembly.Msal' from trimming by adding a new element named `TrimmerRootAssembly` at the bottom of the section.
 
-    Change the references from:
-    ```xml
-    <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0-rc.1.21452.15" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0-rc.1.21452.15" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="6.0.0-rc.1.21452.15" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0-rc.1.21451.13" />
-    </ItemGroup>
-    ```
-    into:
+Change the references from:
+```xml
+<ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0-rc.1.21452.15" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0-rc.1.21452.15" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="6.0.0-rc.1.21452.15" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0-rc.1.21451.13" />
+</ItemGroup>
+```
+into this:
 
-    ```xml
-    <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0-rc.1.21452.15" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0-rc.1.21452.15" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="6.0.0-rc.1.21452.15" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0-rc.1.21451.13" />
-        <TrimmerRootAssembly Include="Microsoft.Authentication.WebAssembly.Msal"  />
-    </ItemGroup>
-    ```
-> Notice the added `TrimmerRootAssembly` line to ensure Msal is included in the published output.
+```xml
+<ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0-rc.1.21452.15" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0-rc.1.21452.15" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" Version="6.0.0-rc.1.21452.15" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0-rc.1.21451.13" />
+    <TrimmerRootAssembly Include="Microsoft.Authentication.WebAssembly.Msal"  />
+</ItemGroup>
+```
 
-### 3. Test your code
-Your project should now compile and run without errors. Use `dotnet run` from the 'Server' project to ensure everything works.
+> Notice the added `TrimmerRootAssembly` on line 14, which ensures that Msal is included in the published output.
 
-#### Visual Studio
+## Test your code
+Your project should now compile and run without errors. 
+
+### Using Visual Studio Code
+Use 'F5' to start debugging, select the 'Server' project when asked.
+
+Alternatively, use the built-in Terminal to run the command `dotnet run` from the 'Server' project folder, to ensure everything works.
+
+### Using Visual Studio
 Start debugging by pressing F5 or select `Start debugging` from the `Debug` menu. Or select the option to run without debugging.
 
-#### VS Code
-- Open the terminal
-- Navigate to the 'Server' project and run the project:
+### Using a Browser
 
-    ```
-    cd d:\projects\clubcloud\XpiritInsurance\Server
+Use a web browser to navigate to https://localhost:5001
 
-    dotnet run
-    ```
+Log in using username `user01@xpiritinsurance.com` and the password provided by the proctors.
 
-## Adding custom code
-We will now change the scaffolded code, to create some insurance selling functionality.
+Navigate to [Fetch data](https://localhost:5001/fetchdata) to assert that everyting works as expected. If all is well, you should see some random weather data.
+
+![](media/forecasts.png)
+
+# Another round of adding custom code
+We will now change the code again. This time, to create some insurance selling functionality.
+
 To do this, we will add a Web API controller that can serve insurance quotes, and be used to purchase & view insurances.
 
-### 1. Add shared code to the 'Shared' project
-> The 'Shared' project contains code that is available to both Client and Server. This is a great place to store objects that are serialized and sent over the network from client to server or v.v.
+## Add shared code to the 'Shared' project
 
-Open the folder 'XpiritInsurance.Shared' and add these files:
+The 'Shared' project contains code that is available to both Client and Server. This is a great place to store objects that are serialized and sent over the network from client to server or v.v.
+
+In Visual Studio, or VS Code, open the project 'XpiritInsurance.Shared' and add these files:
 
 - Insurance.cs
     ```csharp
@@ -186,16 +204,18 @@ Open the folder 'XpiritInsurance.Shared' and add these files:
     namespace XpiritInsurance.Shared;
     public record Quote(string? UserName, InsuranceType InsuranceType, decimal AmountPerMonth);
     ```
+> Don't forget to save the changes.
+## Add Web API code to the 'Server' project
+You will now add a new API Controller to the project, this will manage insurances in (fake) storage.
 
-### 2. Add Web API code to the 'Server' project
-- Create a folder named 'Services' in the root of the 'Server' project. Make sure that it is created at the same level of the 'Controllers' folder that is already present.
+Create a folder named 'Services' in the root of the 'Server' project. Make sure that it is created at the same level of the 'Controllers' folder that is already present.
 - Add a Nuget Package reference to include 'Microsoft.Experimental.Collections':
 ```
 cd .\Server
 dotnet add package Microsoft.Experimental.Collections -v 1.0.6-e190117-3
 ```
 
-Open the folder 'XpiritInsurance.Server' and add these files:
+Still inside the Server project, add a new API Controller:
 
 - Controllers\InsuranceController.cs
     ```csharp
@@ -262,6 +282,9 @@ Open the folder 'XpiritInsurance.Server' and add these files:
     }
     ```
 
+
+Add a fake storage service class:
+
 - Services\InsuranceService.cs
     ```csharp
     using Microsoft.Collections.Extensions;
@@ -306,6 +329,9 @@ Open the folder 'XpiritInsurance.Server' and add these files:
         }
     }
     ```
+
+Add a fake insurance quote-amount service class:
+
 - Services\QuoteAmountService.cs
     ```csharp
     using XpiritInsurance.Shared;
@@ -333,28 +359,35 @@ Open the folder 'XpiritInsurance.Server' and add these files:
         }
     }
     ```
+
+Register the services for Dependency Injection:
+
 - Open the file 'program.cs' to register the 2 newly added (mock) services:
-      On line 15, below `builder.Services.AddRazorPages();`, insert these new lines of code:
+      On line 14, below `builder.Services.AddRazorPages();`, insert these new lines of code:
     ```csharp
     //Add mock services
     builder.Services.AddSingleton<XpiritInsurance.Server.Services.QuoteAmountService>();
     builder.Services.AddSingleton<XpiritInsurance.Server.Services.InsuranceService>();
     ```
 
-    > Your project should now compile and run without errors. Use `dotnet run` from the 'Server' project to ensure everything works.
+### Test your changes
+
+Your project should now compile and run without errors. Use the [same test method](#test-your-code) as before, to ensure everything works.
 
 
-### 3. Add Blazor Frontend code to the 'Client' project
+## Add some Blazor code to the 'Client' project
 
-#### 3.1 Configure MudBlazor library
+You will now add an open-source library named 'MudBlazor' to the Client project, that offers some useful controls to use on your pages. This way, we can create a nice user interface without effort.
+
+### Configure MudBlazor library
 
 - Add the MudBlazor Nuget package to the Client project for some nice UI components:
     ```
     cd ..\Client
-    dotnet add package MudBlazor
+    dotnet add package MudBlazor -v 5.1.5
     ```
 
-- Open the file named '_Imports.razor' in the Client folder, and add MudBlazor:
+- Open the file named '_Imports.razor' in the Client folder, and add MudBlazor to the bottom of the file:
 
     ```
     @using MudBlazor
@@ -386,11 +419,11 @@ Open the folder 'XpiritInsurance.Server' and add these files:
     ```csharp
     //line 1:
     using MudBlazor.Services;
-    //line 25:
+    //line 23:
     builder.Services.AddMudServices();
     ```
 
-#### 3.2 Add UI components
+### Add UI components
 
 We will now add some User Interface components that interact with the Web API's to allow users to buy insurance.
 The first page will fetch a user's existing insurances from the API and display them.
@@ -640,7 +673,7 @@ Change the code from this:
         </nav>
     </div>
     ```
-    into this":
+    into this:
     ```html
     <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
         <nav class="flex-column">
@@ -662,91 +695,100 @@ Change the code from this:
         </nav>
     </div>
     ```
-    > Notice the changed menu item URLs.
+    > Notice the changed menu item URLs and names.
 
-### 4. Check it
+### Test insurance selling
 
-Check if everything works by running the project, logging in, getting a quote and buying the insurance.
+Your project should now compile and run without errors. Use the [same test method](#test-your-code) as before.
 
-## Add Storage Queue
+- Instead of using 'Fetch data', navigate to  [My quotes](https://localhost:5001/quotes)
+
+- Look at [My insurances](https://localhost:5001/insurances) to see your current insurances.
+- Click on any of the 'Get Quote'
+- Click on 'Buy This' for which a quote was fetched
+- Navigate to [My insurances](https://localhost:5001/insurances) to see your new insurances.
+
+# Even more modifications - adding a Storage Queue
 If everything works properly, you can add some Cloud functionality to the app.
 
-### 1. Server Project
+### Server Project
 You will now modify the Web API code in the 'Server' project, to send a message to an Azure Storage Queue whenever a new insurance is sold. This way, remote systems can process the information.
 
-- In the Server project, add a Nuget package to enable use of Azure Storage Queues:
+In the Server project, add a Nuget package to enable use of Azure Storage Queues:
 
-    ```
-    cd .\Server
-    dotnet add package Azure.Storage.Queues
-    dotnet add package Microsoft.Extensions.Azure
-    ```
-- Open 'Program.cs'
+```
+cd .\Server
+dotnet add package Azure.Storage.Queues
+dotnet add package Microsoft.Extensions.Azure
+```
 
-    Change `Program.cs` to add a StorageQueue client to Dependency Injection, at line 19, below the mock services you added earlier:
+Open 'Program.cs'
 
-    ```csharp
-    //add queue service
-    string storageQueueConnectionString = builder.Configuration["storageAccountConnectionString"];
-    if (!string.IsNullOrEmpty(storageQueueConnectionString))
+Change `Program.cs` to add a StorageQueue client to Dependency Injection, at line 19, below the mock services you added earlier:
+
+```csharp
+//add queue service
+string storageQueueConnectionString = builder.Configuration["storageAccountConnectionString"];
+if (!string.IsNullOrEmpty(storageQueueConnectionString))
+{
+    builder.Services.AddSingleton(new Azure.Storage.Queues.QueueClient(storageQueueConnectionString, "insurance"));
+}
+```
+
+Open 'Controllers\InsuranceController.cs'.
+
+Replace the method 'BuyInsurance' with this, to send a message to the Storage Queue whenever an insurance is sold:
+
+```csharp
+[ProducesDefaultResponseType]
+[HttpPost]
+public async Task<IActionResult> BuyInsurance(Quote quote)
+{
+    string userName = HttpContext.User.GetDisplayName();
+    decimal amount = quote.AmountPerMonth;
+    if (amount < 5 || amount > 150)
     {
-        builder.Services.AddSingleton(new Azure.Storage.Queues.QueueClient(storageQueueConnectionString, "insurance"));
+        amount = await _quoteAmountService.CalculateQuote(userName, quote.InsuranceType);
     }
-    ```
-
-- Open 'Controllers\InsuranceController.cs'.
-
-    Replace the method 'BuyInsurance' with this, to send a message to the Storage Queue whenever an insurance is sold:
-
-    ```csharp
-    [ProducesDefaultResponseType]
-    [HttpPost]
-    public async Task<IActionResult> BuyInsurance(Quote quote)
+    var insurance = await _insuranceService.AddInsurance(quote with { UserName = userName, AmountPerMonth = amount });
+    if (_queueClient != null)
     {
-        string userName = HttpContext.User.GetDisplayName();
-        decimal amount = quote.AmountPerMonth;
-        if (amount < 5 || amount > 150)
-        {
-            amount = await _quoteAmountService.CalculateQuote(userName, quote.InsuranceType);
-        }
-        var insurance = await _insuranceService.AddInsurance(quote with { UserName = userName, AmountPerMonth = amount });
-        if (_queueClient != null)
-        {
-            await _queueClient.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(insurance));
-        }
-        _logger.LogInformation("Sold insurance {InsuranceType} to user {UserName} for {AmountPerMonth}", quote.InsuranceType, userName, amount);
-        return Ok();
+        await _queueClient.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(insurance));
     }
-    ```
+    _logger.LogInformation("Sold insurance {InsuranceType} to user {UserName} for {AmountPerMonth}", quote.InsuranceType, userName, amount);
+    return Ok();
+}
+```
 
-- In the same file, replace the constructor and field declarations with this code, to get a QueueClient object injected, and to save it for later use.
+In the same file, replace the constructor and field declarations with this code, to get a QueueClient object injected, and to save it for later use.
 
-    ```csharp
-    private readonly ILogger<InsuranceController> _logger;
-    private readonly QuoteAmountService _quoteAmountService;
-    private readonly InsuranceService _insuranceService;
-    private readonly QueueClient? _queueClient;
+```csharp
+private readonly ILogger<InsuranceController> _logger;
+private readonly QuoteAmountService _quoteAmountService;
+private readonly InsuranceService _insuranceService;
+private readonly QueueClient? _queueClient;
 
-    public InsuranceController(ILogger<InsuranceController> logger, QuoteAmountService quoteAmountService, InsuranceService insuranceService, QueueClient? queueClient)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _quoteAmountService = quoteAmountService ?? throw new ArgumentNullException(nameof(quoteAmountService));
-        _insuranceService = insuranceService ?? throw new ArgumentNullException(nameof(insuranceService));
-        _queueClient = queueClient;
-    }
-    ```
+public InsuranceController(ILogger<InsuranceController> logger, QuoteAmountService quoteAmountService, InsuranceService insuranceService, QueueClient? queueClient)
+{
+    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    _quoteAmountService = quoteAmountService ?? throw new ArgumentNullException(nameof(quoteAmountService));
+    _insuranceService = insuranceService ?? throw new ArgumentNullException(nameof(insuranceService));
+    _queueClient = queueClient;
+}
+```
 
-- Using Visual Studio, configure the project for user secrets. Add a secret named 'storageAccountConnectionString' and put in the connection string provided by the proctor.
-Alternatively, you can use an environment variable in the 'Properties\launchSettings.json' file, on line 19. 
+### Providing the connectionstring
+Using Visual Studio 2022, configure the project for user secrets. Add a secret named `storageAccountConnectionString` and put in the connection string provided by the proctor.
+
+Alternatively, you can use an environment variable in the 'Properties\launchSettings.json' file, on line 19. Or, use another way to define the environment variable.
+
 > Make sure that this secret is not checked into the repository. It would be much better to use Managed Identity in this situation. We will leave this as a challenge for you, once you complete this Lab.
 
-### 2. Check it
+### Check it
+Your project should now compile and run without errors. Use the [same test method](#test-insurance-selling) as before.
+
 Run and test the program to see if everything works. Ask the proctor to check the Storage Queue.
 
-## Cheating - Using our prepared 'Xpirit Insurance' demo environment
-
-The easiest option to get started is to run the source code included in this repo. It works straight out of the box. You can also use the sample code if you get stuck during the Lab.
-You can find it in the `src` folder. You can also use this as a reference if you get stuck somewhere.
 
 ### Logging in
 Create a test account in your own B2C environment, and attempt to log in. 
