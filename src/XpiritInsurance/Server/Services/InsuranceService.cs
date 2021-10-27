@@ -1,6 +1,5 @@
-﻿using Microsoft.Collections.Extensions;
+using Microsoft.Collections.Extensions;
 using XpiritInsurance.Shared;
-
 namespace XpiritInsurance.Server.Services;
 
 public class InsuranceService

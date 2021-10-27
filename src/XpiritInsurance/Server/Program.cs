@@ -11,11 +11,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-
 //Add mock services
 builder.Services.AddSingleton<XpiritInsurance.Server.Services.QuoteAmountService>();
 builder.Services.AddSingleton<XpiritInsurance.Server.Services.InsuranceService>();
-
 //add queue service
 string storageQueueConnectionString = builder.Configuration["storageAccountConnectionString"];
 if (!string.IsNullOrEmpty(storageQueueConnectionString))

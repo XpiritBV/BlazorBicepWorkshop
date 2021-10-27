@@ -1,5 +1,4 @@
-﻿using XpiritInsurance.Shared;
-
+using XpiritInsurance.Shared;
 namespace XpiritInsurance.Server.Services;
 
 public class QuoteAmountService

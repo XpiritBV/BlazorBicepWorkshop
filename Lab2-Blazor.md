@@ -712,7 +712,7 @@ Your project should now compile and run without errors. Use the [same test metho
 If everything works properly, you can add some Cloud functionality to the app.
 
 ### Server Project
-You will now modify the Web API code in the 'Server' project, to send a message to an Azure Storage Queue whenever a new insurance is sold. This way, remote systems can process the information.
+We will now modify the Web API code in the 'Server' project, to send a message to an Azure Storage Queue whenever a new insurance is sold. This way, remote systems can process the information.
 
 In the Server project, add a Nuget package to enable use of Azure Storage Queues:
 
@@ -724,7 +724,7 @@ dotnet add package Microsoft.Extensions.Azure
 
 Open 'Program.cs'
 
-Change `Program.cs` to add a StorageQueue client to Dependency Injection, at line 19, below the mock services you added earlier:
+Change `Program.cs` to add a StorageQueue client to Dependency Injection, at line 17, below the mock services you added earlier, but **before** `var app = builder.Build();`:
 
 ```csharp
 //add queue service
@@ -734,10 +734,24 @@ if (!string.IsNullOrEmpty(storageQueueConnectionString))
     builder.Services.AddSingleton(new Azure.Storage.Queues.QueueClient(storageQueueConnectionString, "insurance"));
 }
 ```
+The entire modified code block should now resemble this:
+
+```csharp
+//Add mock services
+builder.Services.AddSingleton<XpiritInsurance.Server.Services.QuoteAmountService>();
+builder.Services.AddSingleton<XpiritInsurance.Server.Services.InsuranceService>();
+//add queue service
+string storageQueueConnectionString = builder.Configuration["storageAccountConnectionString"];
+if (!string.IsNullOrEmpty(storageQueueConnectionString))
+{
+    builder.Services.AddSingleton(new Azure.Storage.Queues.QueueClient(storageQueueConnectionString, "insurance"));
+}
+var app = builder.Build();
+```
 
 Open 'Controllers\InsuranceController.cs'.
 
-Replace the method 'BuyInsurance' with this, to send a message to the Storage Queue whenever an insurance is sold:
+Replace the method `BuyInsurance` at ln 38 with the code below, to send a message to the Storage Queue whenever an insurance is sold:
 
 ```csharp
 [ProducesDefaultResponseType]
@@ -760,7 +774,7 @@ public async Task<IActionResult> BuyInsurance(Quote quote)
 }
 ```
 
-In the same file, replace the constructor and field declarations with this code, to get a QueueClient object injected, and to save it for later use.
+In the same file, replace the constructor at ln 20 and field declarations with this code, to get a `QueueClient` object injected, and to save it for later use.
 
 ```csharp
 private readonly ILogger<InsuranceController> _logger;
@@ -777,12 +791,26 @@ public InsuranceController(ILogger<InsuranceController> logger, QuoteAmountServi
 }
 ```
 
+In the same file at ln 8, add the following code to include the namespace that holds the definition of `QueueClient`.
+
+```csharp
+using Azure.Storage.Queues;
+```
+
 ### Providing the connectionstring
-Using Visual Studio 2022, configure the project for user secrets. Add a secret named `storageAccountConnectionString` and put in the connection string provided by the proctor.
+Using Visual Studio 2022, configure the project for user secrets. Add a secret named `storageAccountConnectionString` and put in the connection string provided by the proctor, or use your own.
 
 Alternatively, you can use an environment variable in the 'Properties\launchSettings.json' file, on line 19. Or, use another way to define the environment variable.
 
-> Make sure that this secret is not checked into the repository. It would be much better to use Managed Identity in this situation. We will leave this as a challenge for you, once you complete this Lab.
+```powershell
+$env:storageAccountConnectionString="DefaultEndpointsProtocol=https;AccountName=[..redacted..]"
+```
+
+> When using an environment variable in the terminal, make sure to run `dotnet run` from the same terminal, as the variable is defined at the process level and needs to be inherited by the dotnet process.
+
+> Make sure that your secret is not checked into the repository. 
+
+> It would be much better to use Managed Identity in this situation. We will leave this as a challenge for you, once you complete this Lab.
 
 ### Check it
 Your project should now compile and run without errors. Use the [same test method](#test-insurance-selling) as before.
@@ -794,10 +822,10 @@ Run and test the program to see if everything works. Ask the proctor to check th
 Create a test account in your own B2C environment, and attempt to log in. 
 When using the Xpirit Insurance Demo B2C tenant, use one of these existing accounts to log in:
 
-| User account | Password   |
-|--------------|----------- |
-| user01       | please ask |
-| user02       | please ask |
+| Username     | Account    | Password |
+|--------------|----------- | -------- |
+| user 01      | please ask | ***      |
+| user 02      | please ask | ***      |
 
 
 ## Publish your code locally
@@ -833,8 +861,11 @@ cd bin\Release\net6.0\publish\
 Compress-Archive -Path .\* -DestinationPath package.zip -Force
 
 ```
+This package will be useful for the next Lab.
 
 # Summary
 You have now completed this lab. Please go to the next lab, where you will learn how to provision the required Azure resources to run this modern web application in an Azure App Service.
+
+Please continue to [Lab 3 - Infrastructure as Code using Bicep](Lab3-Bicep.md)
 
 

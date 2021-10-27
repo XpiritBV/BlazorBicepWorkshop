@@ -1,11 +1,11 @@
-﻿using System.Net;
-using Azure.Storage.Queues;
+using System.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
 using XpiritInsurance.Server.Services;
 using XpiritInsurance.Shared;
-
+using Azure.Storage.Queues;
 namespace XpiritInsurance.Server.Controllers;
 
 [RequiredScope(RequiredScopesConfigurationKey = "AzureAdB2C:Scopes")]
@@ -13,7 +13,7 @@ namespace XpiritInsurance.Server.Controllers;
 [Route("[controller]")]
 public class InsuranceController : ControllerBase
 {
-    private readonly ILogger<InsuranceController> _logger;
+private readonly ILogger<InsuranceController> _logger;
     private readonly QuoteAmountService _quoteAmountService;
     private readonly InsuranceService _insuranceService;
     private readonly QueueClient? _queueClient;
@@ -64,4 +64,3 @@ public class InsuranceController : ControllerBase
         return Ok(new Quote(userName, insuranceType, amount));
     }
 }
-
