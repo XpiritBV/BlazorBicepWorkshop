@@ -10,9 +10,15 @@ Goals for this lab:
 
 ## Prerequisites
 Make sure you have completed [Lab 2 - Building a modern web application using Blazor](Lab2-Blazor.md)
-
+This lab also requires some basic knowledge about these common Azure services.
+- [Azure Storage Accounts](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview) 
+- [Azure Queue Storage](https://docs.microsoft.com/en-us/azure/storage/queues/storage-queues-introduction)
+- [Azure App Service](https://azure.microsoft.com/en-us/services/app-service)
+- 
 ## <a name="queue"></a> Creating the Queue
-This workshop uses an Azure Storage Queue as its messaging service. That requires us to create an Azure Storage Account. Create a new file called main.bicep. The Bicep VS Code extension that you installed can help create resources as it provides a lot of snippets. Type 'stor' and the extension should provide you with a snippet.
+This workshop uses an Azure Storage Queue as its messaging service. That requires us to create an Azure Storage Account. 
+
+Create a new file called main.bicep. The Bicep VS Code extension that you installed can help create resources as it provides a lot of snippets. Type 'stor' and the extension should provide you with a snippet.
 
 ![](media/storageaccountsnippet.png)
 
@@ -37,19 +43,21 @@ resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
 }
 ```
 
-The name of the storage account is now hardcoded. That is not ideal since you want to use this template for both your test and production environment. The names of resources should reflect that. In Bicep, you can use a parameter to provide values, like the environment, at runtime. Defining one looks like this:
+The name of the storage account is now hardcoded. That is not ideal since you want to use this template for both your test and production environment. The names of resources should reflect that. In Bicep, you can use a parameter to provide values, like the environment, at runtime. 
+
+Defining one looks like this:
 
 ```arm
 param env string = 'tst'
 ```
-You start with the keyword 'param', then give it a name, and define its type. Optionally, you can set a default value like the 'tst' above. The same can be done for the location property of the storage account.
+You start with the keyword 'param', then give it a name and define its type. Optionally, you can set a default value like the 'tst' above. The same can be done for the location property of the storage account.
 
 Next to parameters, we can use variables for values that you want to reuse across your templates. Creating a variable that holds the name of the storage account could look like this:
 ```arm
 var storageAccountName = 'storblazor${env}001'
 ```
 
-The result of using parameters and a variable is shown below
+The result of using both parameters and a variable is shown below:
 ```arm
 param env string = 'tst2'
 param location string = 'westeurope'
@@ -66,14 +74,14 @@ resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
 }
 ```
 
-Now that we have a Storage Account, it is time to add the Queue. To do that, you first enable the Queue Services and then create a queue. For both of those services, there is no build-in snippet available. The extension in VS Code is still handy to create both services.
+Now that we have defined a Storage Account, it is time to add the Queue. To do that, you first enable the Queue Services feature and then create a queue. For both of those services, there is no built-in snippet available. The extension in VS Code is still handy to create both services.
 
-The QueueService is a child resource of the Storage Account, and so you define that within the storage account resource. To create the QueueService, start typing 'resource queueService que' within the storage account resource as shown below. 
+The `QueueService` is a child resource of the Storage Account, so you define it within the storage account resource. To create the `QueueService`, start typing 'resource queueService que' within the storage account resource as shown below.
 ![](media/queueService.png)
 As you can see, the extension helps to select the right resource and version. Hit enter and add an '=' to the line. As shown below, the extension again helps you by offering a few options. 
 
 ![](media/queueServiceRequiredProperties.png)
-Selecting 'required-properties' will finish the resource by adding all properties that need a value. The name of the QueueService always needs to be 'default', so make that it's name. The actual Queue is again a child resource of the QueueService and can be added similarly. The result should resemble the below template:
+Selecting 'required-properties' will finish the resource by adding all properties that need a value. The name of the `QueueService` always needs to be 'default', so make that its name. The `Queue` is a child resource of the `QueueService` and can be added similarly. The result should resemble the below template:
 
 ```arm
 resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
@@ -95,12 +103,12 @@ resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
 ```
 
 ## <a name="queue"></a> Deploy the Storage Account
-To deploy the storage account, you first need a resource group. The bellow command allows you to create one.
+To deploy the storage account, you first need a resource group. The below command allows you to create one.
 ```
 az group create -l westeurope -n rg-blazorbicepworkshop-tst-001
 ```
 
-Now that your resource group is ready, you can deploy the template using the below command
+Now that your resource group is ready, you can deploy the template using the command below:
 ```
 az deployment group create --resource-group rg-blazorbicepworkshop-tst-001 --template-file main.bicep
 ```
@@ -112,7 +120,7 @@ az deployment group create --resource-group rg-blazorbicepworkshop-tst-001 \
 ```
 
 ## <a name="appservice"></a> Add the Azure App Service
-The Blazer app build in the previous lab will run on an Azure App Service. That consists of two resources; an App Service Plan and an App Service. An App Service Plan defines a set of compute resources. On that plan you run one or more App Services that share the compute resources.
+The Blazor app you have built in the previous lab will run on an Azure App Service. It consists of two resources; an App Service Plan and an App Service. An App Service Plan defines a set of compute resources. On top of the plan, you run one or more App Services that share the compute resources.
 
 To create the Plan, type 'plan' and select 'res-app-plan'. Change the sku to 'B1' and give it a name. The resource should be similar to this example:
 ```arm
@@ -127,7 +135,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2019-08-01' = {
   }
 }
 ```
-Creating the App Service is done using the 'res-web-app' snippet. Notice how the 'serverFarmId' property is used to link this App Service to the plan you just created. There is one addition that you need to make to this template. Within the properties section, you need to add the required .Net Framework version. The Blazer app requires .Net 6 but since this is not the default value you need to explicitly set it. The template should then resemble the below example:
+Creating the App Service is done using the 'res-web-app' snippet. Notice how the `serverFarmId` property is used to link this App Service to the plan you just created. There is one addition that you need to make to this template. Within the `properties` section, you need to add the required .NET Framework version. The Blazor app requires .NET 6 but as this is not the default value, you need to explicitly set it. The template should then resemble the below example:
 
 ```arm
 var appServiceName = 'app-blazor-${env}-001'
