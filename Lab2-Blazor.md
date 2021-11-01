@@ -249,7 +249,7 @@ Still inside the Server project, add a new API Controller:
         [HttpGet]
         public async Task<IActionResult> GetInsurances()
         {
-            string userName = HttpContext.User.GetDisplayName();
+            string userName = HttpContext.User.GetDisplayName() ?? "unknown";
             var insurances = await _insuranceService.GetInsurances(userName);
             return Ok(insurances);
         }
@@ -258,7 +258,7 @@ Still inside the Server project, add a new API Controller:
         [HttpPost]
         public async Task<IActionResult> BuyInsurance(Quote quote)
         {
-            string userName = HttpContext.User.GetDisplayName();
+            string userName = HttpContext.User.GetDisplayName() ?? "unknown";
             decimal amount = quote.AmountPerMonth;
             if (amount < 5 || amount > 150)
             {
@@ -274,7 +274,7 @@ Still inside the Server project, add a new API Controller:
         [HttpGet("quote")]
         public async Task<IActionResult> CalculateQuote(InsuranceType insuranceType)
         {
-            string userName = HttpContext.User.GetDisplayName();
+            string userName = HttpContext.User.GetDisplayName() ?? "unknown";
             decimal amount = await _quoteAmountService.CalculateQuote(userName, insuranceType);
 
             return Ok(new Quote(userName, insuranceType, amount));
@@ -758,7 +758,7 @@ Replace the method `BuyInsurance` at ln 38 with the code below, to send a messag
 [HttpPost]
 public async Task<IActionResult> BuyInsurance(Quote quote)
 {
-    string userName = HttpContext.User.GetDisplayName();
+    string userName = HttpContext.User.GetDisplayName() ?? "unknown";
     decimal amount = quote.AmountPerMonth;
     if (amount < 5 || amount > 150)
     {
@@ -829,6 +829,10 @@ When using the Xpirit Insurance Demo B2C tenant, use one of these existing accou
 
 
 ## Publish your code locally
+
+You will now create a zip file that contains the binaries for this Blazor application. In the next lab, you will deploy this package to Azure.
+
+In your terminal, navigate to the root of the 'Server' project.
 
 ```
 dotnet publish --configuration Release
