@@ -151,7 +151,7 @@ resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
   }
 }
 ```
-Remember how the Blazor app used the environment variables to get the connection information for the Storage Account Queue. Using Bicep, you can set these values as settings on your App Service while deploying that. To do that, add the appSettings property to the siteConfig section like so:
+Remember how the Blazor app used an environment variables to get the connection information for the Storage Account Queue? Using Bicep, you can set these values as settings on your App Service while deploying it. To do that, add the appSettings property to the `siteConfig` section like this:
 
 ```
 siteConfig: {
@@ -161,14 +161,14 @@ siteConfig: {
     }
 ```
 
-The appSettings property is an array and so allows for multiple key-value pairs to be inserted. In this lab, you only need one for the Storage Account connection string. Using Bicep, you can create a variable to construct that.
+The `appSettings` property is an array and allows for multiple key-value pairs to be inserted. In this lab, you only need one for the Storage Account connection string. Using Bicep, you can create a variable to construct it:
 
 ```arm
 var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${stg.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${stg.listKeys().keys[0].value}'
 ```
-Notice how this line uses a reference to the Storage Account using the 'stg' object to get its name. It also uses the .listKeys() function to get an account key. Last but not least, it uses the environment() function to get the storage account base URL.
+Notice how this line uses a reference to the Storage Account using the 'stg' object to get its name. It also uses the `.listKeys()` function to get an account key. Last but not least, it uses the `environment()` function to get the storage account base URL.
 
-Below you find the template containing the 'storageConnectionString' variable that is used in the appSettings array.
+Below you will find the template containing the 'storageConnectionString' variable that is used in the appSettings array:
 
 ```arm
 var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${stg.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${stg.listKeys().keys[0].value}'
@@ -192,10 +192,10 @@ resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
   }
 }
 ```
-> WARNING: for the sake of simplicity, you have now set the connection string as a setting on the App Service. In a real-life scenario, that is not an option since that connectionstring will then be readably in plain-text in, for example, the Azure Portal. It's better to store this secret in Key Vault or use a Managed Identity instead.
+> WARNING: for the sake of simplicity, you have now set the connection string as a setting on the App Service. In a real-life scenario, that is not an option since that connection string will then be readably in plain-text in, for example, the Azure Portal. It's better to store this secret in Key Vault, or use a Managed Identity instead.
 
 ## <a name="appservicelogging"></a> Optionally add logging to your Azure App Service
-To make your life a little easier while debugging your app on Azure, you could add the following resource to your template to enable logging on the App Service. It is a child resource and so you need to place that within the curly braces that describe your app Service Plan as shown below.
+To make your life a little easier while debugging your app on Azure, you could add the following resource to your template to enable logging on the App Service. It is a child resource and you will need to place it within the curly braces that describe your App Service Plan as shown below:
 ```arm
 resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
     name: appServiceName
@@ -227,7 +227,7 @@ resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
   ```
 
 ## <a name="publishcode"></a> Publish your code to Azure
-Publishing the Blazor app to your App Service Plan can be done using the below command.
+Publish the Blazor app to your App Service Plan by using this command:
 
 ```
 az webapp deploy --resource-group rg-blazorbicepworkshop-tst-001 --name app-blazor-tst-001 --src-path package.zip
