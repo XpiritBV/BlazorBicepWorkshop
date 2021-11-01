@@ -14,7 +14,7 @@ This lab also requires some basic knowledge about these common Azure services.
 - [Azure Storage Accounts](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview) 
 - [Azure Queue Storage](https://docs.microsoft.com/en-us/azure/storage/queues/storage-queues-introduction)
 - [Azure App Service](https://azure.microsoft.com/en-us/services/app-service)
-- 
+
 ## <a name="queue"></a> Creating the Queue
 This workshop uses an Azure Storage Queue as its messaging service. That requires us to create an Azure Storage Account. 
 
@@ -59,14 +59,14 @@ var storageAccountName = 'storblazor${env}001'
 
 The result of using both parameters and a variable is shown below:
 ```arm
-param env string = 'tst2'
+param env string = 'tst'
 param location string = 'westeurope'
 
 var storageAccountName = 'storblazor${env}001'
 
 resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'Standard_LRS'
   }
@@ -227,9 +227,11 @@ resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
   ```
 
 ## <a name="publishcode"></a> Publish your code to Azure
-Publish the Blazor app to your App Service Plan by using this command:
+
+Copy the packaged Blazor app from the 'publish' folder to the current directory, and publish it to your App Service Plan by using these commands:
 
 ```
+copy D:\Projects\clubcloud\XpiritInsurance\Server\bin\Release\net6.0\publish\package.zip .
 az webapp deploy --resource-group rg-blazorbicepworkshop-tst-001 --name app-blazor-tst-001 --src-path package.zip
 ```
 
