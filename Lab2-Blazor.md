@@ -202,7 +202,7 @@ In Visual Studio, or VS Code, open the project 'XpiritInsurance.Shared' and add 
 - Quote.cs
     ```csharp
     namespace XpiritInsurance.Shared;
-    public record Quote(string? UserName, InsuranceType InsuranceType, decimal AmountPerMonth);
+    public record Quote(string UserName, InsuranceType InsuranceType, decimal AmountPerMonth);
     ```
 > Don't forget to save the changes.
 ## Add Web API code to the 'Server' project
@@ -492,7 +492,7 @@ The first page will fetch a user's existing insurances from the API and display 
             try
             {
                 var data = await Http.GetFromJsonAsync<IEnumerable<Insurance>>("insurance");
-                _insurances.AddRange(data);
+                if (data != null) _insurances.AddRange(data);_insurances.AddRange(data);
             }
             catch (AccessTokenNotAvailableException exception)
             {
@@ -592,7 +592,7 @@ The second page will fetch quotes for new insurances from the API and display th
                 _hasSuccess = false;
 
                 var quote = await Http.GetFromJsonAsync<Quote>($"insurance/quote?insuranceType={insuranceType}");
-                _quotes[insuranceType] = quote.AmountPerMonth;
+                if (quote != null) _quotes[insuranceType] = quote.AmountPerMonth;_quotes[insuranceType] = quote.AmountPerMonth;
             }
             catch (AccessTokenNotAvailableException exception)
             {
@@ -621,7 +621,7 @@ The second page will fetch quotes for new insurances from the API and display th
                 var it = (InsuranceType)Enum.Parse(typeof(InsuranceType), insuranceType);
                 if (_quotes.TryGetValue(insuranceType, out var amount) && amount.HasValue)
                 {
-                    var response = await Http.PostAsJsonAsync<Quote>($"insurance", new Quote(null, it, amount.Value));
+                    var response = await Http.PostAsJsonAsync<Quote>($"insurance", new Quote("", it, amount.Value));
                     response.EnsureSuccessStatusCode();
                     _message = $"Bought {insuranceType} insurance for {amount.Value}€ per month.";
                     _hasSuccess = true;
