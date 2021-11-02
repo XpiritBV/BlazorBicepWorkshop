@@ -11,7 +11,7 @@ Even though this is an introductory workshop, you will need to bring some experi
 In the morning, you will learn how to create a basic Blazor web app, that uses an Identity Provider to authenticate users and integrates with a message queue inside Azure. The source code will also feature some new C# features.
 In the afternoon, you will learn how to use Infrastructure as Code to create the infrastructure needed to run the Blazor web app. 
 
-This workshop will help you get started building cloud native software and Infrastructure as Code for your own projects!
+This workshop will help you get started building Cloud-native software and Infrastructure as Code for your own projects!
 
 ## Agenda
 - Morning programme
@@ -26,7 +26,7 @@ This workshop will help you get started building cloud native software and Infra
     - 16:00 - Drinks
 
 ## Getting Started
-You can get a head-start before attending the workshop by making sure you have the proper tools installed, and getting an Azure subscription.
+You can get a head-start before attending the workshop by ensuring you have the proper tools installed and getting an Azure subscription.
 
 ### Tools
 - Install [Visual Studio Code](https://code.visualstudio.com/download) 
