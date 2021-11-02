@@ -1,17 +1,17 @@
 # Building a modern web application using Blazor
 
-In this lab we will first create a new Blazor application. It will be an application that authenticates with Azure AD B2C (hosted by Xpirit) and it uses an Azure Store account (also hosted by Xpirit) or [Azurite](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio#install-and-run-azurite).
+In this Lab, we will first create a new Blazor application. It will be an application that authenticates with Azure AD B2C (hosted by Xpirit), and uses an Azure Store account (also hosted by Xpirit) or [Azurite](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio#install-and-run-azurite).
 
 ## Prerequisites
 Make sure you have completed [Lab 1 - Getting started](Lab1-GetttingStarted.md)
 
 ## Prepare a workspace
 
-> This option will get you started quickly, but includes some manual work. Alternatively, you can use the completed solution in this repo and deploy it to Azure in [Lab 3 - Infrastructure as Code using Bicep](Lab3-Bicep.md). Note that by doing this, you will effectively skip this entire Lab.
+> This option will get you started quickly but includes some manual work. Alternatively, you can use the completed solution in this repo and deploy it to Azure in [Lab 3 - Infrastructure as Code using Bicep](Lab3-Bicep.md). Note that by doing this, you will effectively skip this entire Lab.
 
 - Create a new folder to host the project. E.g. `d:\projects\clubcloud`
 - Open a terminal and navigate to the folder. E.g. `cd d:\projects\clubcloud`
-- Run this commmand to generate a skeleton project:
+- Run this command to generate a skeleton project:
 
 ```
 dotnet new blazorwasm -au IndividualB2C --aad-b2c-instance "https://xpiritinsurance.b2clogin.com/" --api-client-id "3b551417-548e-4e8e-80c3-44bb06f3aa64" --app-id-uri "3b551417-548e-4e8e-80c3-44bb06f3aa64" --client-id "e280fc38-2898-4fad-baaf-fbeb1d306bd1" --default-scope "API.Access" --domain "xpiritinsurance.onmicrosoft.com" -ho -o XpiritInsurance -ssp "B2C_1_UserFlowSuSi"
@@ -23,7 +23,7 @@ Move your terminal to the root folder of the generated project before continuing
 ## Changing the scaffolded code
 
 You will now change the scaffolded code to look like a (very basic) insurance selling web site.
-Please examine the generated code, you should see a folder named 'XpiritInsurance', inside the folder, you should see 3 subfolders containing 3 C# projects.
+Please examine the generated code; you should see a folder named 'XpiritInsurance'. Inside the folder, you should see three subfolders containing 3 C# projects.
 
 ![](media/solutionlayout.png)
 
@@ -174,7 +174,7 @@ Use a web browser to navigate to https://localhost:5001
 
 Log in using username `user01@xpiritinsurance.com` and the password provided by the proctors.
 
-Navigate to [Fetch data](https://localhost:5001/fetchdata) to assert that everyting works as expected. If all is well, you should see some random weather data.
+Navigate to [Fetch data](https://localhost:5001/fetchdata) to assert that everything works as expected. If all is well, you should see some random weather data.
 
 ![](media/forecasts.png)
 
@@ -208,7 +208,7 @@ In Visual Studio, or VS Code, open the project 'XpiritInsurance.Shared' and add 
 ## Add Web API code to the 'Server' project
 You will now add a new API Controller to the project, this will manage insurances in (fake) storage.
 
-Create a folder named 'Services' in the root of the 'Server' project. Make sure that it is created at the same level of the 'Controllers' folder that is already present.
+Create a folder named 'Services' in the root of the 'Server' project. Make sure that it is created at the same level as the 'Controllers' folder that is already present.
 - Add a Nuget Package reference to include 'Microsoft.Experimental.Collections':
 ```
 cd .\Server
@@ -703,16 +703,16 @@ Your project should now compile and run without errors. Use the [same test metho
 
 - Instead of using 'Fetch data', navigate to  [My quotes](https://localhost:5001/quotes)
 
-- Look at [My insurances](https://localhost:5001/insurances) to see your current insurances.
+- Look at [My insurances](https://localhost:5001/insurances) to see your current insurances
 - Click on any of the 'Get Quote'
 - Click on 'Buy This' for which a quote was fetched
-- Navigate to [My insurances](https://localhost:5001/insurances) to see your new insurances.
+- Navigate to [My insurances](https://localhost:5001/insurances) to see your new insurances
 
 # Even more modifications - adding a Storage Queue
 If everything works properly, you can add some Cloud functionality to the app.
 
 ### Server Project
-We will now modify the Web API code in the 'Server' project, to send a message to an Azure Storage Queue whenever a new insurance is sold. This way, remote systems can process the information.
+We will now modify the Web API code in the 'Server' project, to send a message to an Azure Storage Queue when an insurance is sold. This way, remote systems can process the information.
 
 In the Server project, add a Nuget package to enable use of Azure Storage Queues:
 
