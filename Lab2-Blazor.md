@@ -107,7 +107,7 @@ For more info see https://aka.ms/dotnet-template-ms-identity-platform
 */
 ```
 ### Modify the Client App
-Open the file `Program.cs` in the 'Client project.
+Open the file `Program.cs` in the 'Client' project.
 
 Modify the `LoginMode` so users are redirected to login, instead of showing a pop-up window:
 
