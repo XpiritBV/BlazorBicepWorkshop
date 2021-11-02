@@ -50,18 +50,18 @@ Defining one looks like this:
 ```arm
 param env string = 'tst'
 ```
-You start with the keyword 'param', then give it a name and define its type. Optionally, you can set a default value like the 'tst' above. The same can be done for the location property of the storage account. To ensure that every participant creates a unique name for the resources created throughout this lab, we add another parameter called 'participantInitials'.
+You start with the keyword 'param', then give it a name and define its type. Optionally, you can set a default value like the 'tst' above. The same can be done for the location property of the storage account. To ensure that every participant creates a unique name for the resources created throughout this lab, we add another parameter called 'participantNumber'.
 
 The parameters now look like this:
 ```arm
 param env string = 'tst'
 param location string = 'westeurope'
-param participantInitials string = 'es'
+param participantNumber string = '001'
 ```
 
 Next to parameters, we can use variables for values that you want to reuse across your templates. Creating a variable that holds the name of the storage account could look like this:
 ```arm
-var storageAccountName = 'storblazor${env}${participantInitials}001'
+var storageAccountName = 'storblazor${env}${participantNumber}'
 ```
 
 The result of using both parameters and a variable is shown below:
@@ -69,7 +69,7 @@ The result of using both parameters and a variable is shown below:
 param env string = 'tst'
 param location string = 'westeurope'
 
-var storageAccountName = 'storblazor${env}${participantInitials}001'
+var storageAccountName = 'storblazor${env}${participantNumber}'
 
 resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
@@ -83,16 +83,16 @@ resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
 ## <a name="queue"></a> Deploy the Storage Account
 To deploy the storage account, you first need a resource group. Later in this lab, you will see how to create that using Bicep when we explore Bicep modules. For now, let's create it using the Azure CLI.
 ```
-az group create -l westeurope -n rg-blazorbicepworkshop-tst-001
+az group create -l westeurope -n rg-blazorbicepworkshop-tst-${participantNumber}
 ```
 
 Now that your resource group is ready, you can deploy the template using the command below:
 ```
-az deployment group create --resource-group rg-blazorbicepworkshop-tst-001 --template-file main.bicep
+az deployment group create --resource-group rg-blazorbicepworkshop-tst-${participantNumber} --template-file main.bicep
 ```
 When you do not provide values for the parameters, the defaults in the template will be used. The following command shows an example of how to give a parameter while deploying the template.
 ```
-az deployment group create --resource-group rg-blazorbicepworkshop-tst-001 \
+az deployment group create --resource-group rg-blazorbicepworkshop-tst-${participantNumber} \
     --template-file main.bicep  \
     --parameters '{ \"env\": { \"value\": \"prd\" } }'
 ```
@@ -133,7 +133,7 @@ resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
 ```
 Deploy your template again using the same command you previously used to deploy it:
 ```
-az deployment group create --resource-group rg-blazorbicepworkshop-tst-001 --template-file main.bicep
+az deployment group create --resource-group rg-blazorbicepworkshop-tst-${participantNumber} --template-file main.bicep
 ```
 
 Navigate to your storage account in the Azure Portal and verify that your queue has been created.
@@ -143,7 +143,7 @@ The Blazor app you have built in the previous lab will run on an Azure App Servi
 ### <a name="appservice"></a> App Service Plan
 To create the Plan, type 'plan' and select 'res-app-plan'. Change the sku to 'B1' and give it a name. The resource should be similar to this example:
 ```arm
-var serverFarmName = 'plan-blazor-${env}${participantInitials}-001'
+var serverFarmName = 'plan-blazor-${env}-${participantNumber}'
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2019-08-01' = {
   name: serverFarmName
@@ -157,7 +157,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2019-08-01' = {
 
 Deploy your template using the following command:
 ```
-az deployment group create --resource-group rg-blazorbicepworkshop-tst-001 --template-file main.bicep
+az deployment group create --resource-group rg-blazorbicepworkshop-tst-${participantNumber} --template-file main.bicep
 ```
 
 Go back to the Azure Portal and verify that your App Service Plan has been created.
@@ -166,7 +166,7 @@ Go back to the Azure Portal and verify that your App Service Plan has been creat
 Creating the App Service is done using the 'res-web-app' snippet. Notice how the `serverFarmId` property is used to link this App Service to the plan you just created. There is one addition that you need to make to this template. Within the `properties` section, you need to add the required .NET Framework version. The Blazor app requires .NET 6 but as this is not the default value, you need to explicitly set it. The template should then resemble the below example:
 
 ```arm
-var appServiceName = 'app-blazor-${env}${participantInitials}-001'
+var appServiceName = 'app-blazor-${env}-${participantNumber}'
 resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
   name: appServiceName
   location: location
@@ -181,7 +181,7 @@ resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
 ```
 Deploy your template using the following command:
 ```
-az deployment group create --resource-group rg-blazorbicepworkshop-tst-001 --template-file main.bicep
+az deployment group create --resource-group rg-blazorbicepworkshop-tst-${participantNumber} --template-file main.bicep
 ```
 Open the Azure Portal and verify that your App Service has been created and is linked with the App Service Plan.
 
@@ -207,7 +207,7 @@ Below you will find the template containing the 'storageConnectionString' variab
 ```arm
 var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${stg.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${stg.listKeys().keys[0].value}'
 
-var appServiceName = 'app-blazor-${env}${participantInitials}-001'
+var appServiceName = 'app-blazor-${env}-${participantNumber}'
 resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
   name: appServiceName
   location: location
@@ -230,7 +230,7 @@ resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
 
 Deploy your template using the following command:
 ```
-az deployment group create --resource-group rg-blazorbicepworkshop-tst-001 --template-file main.bicep
+az deployment group create --resource-group rg-blazorbicepworkshop-tst-${participantNumber} --template-file main.bicep
 ```
 Open the Azure Portal and verify that the setting is deployed on the App Service.
 ## <a name="appservicelogging"></a> Optionally add logging to your Azure App Service
@@ -271,7 +271,7 @@ Copy the packaged Blazor app from the 'publish' folder to the current directory,
 
 ```
 copy D:\Projects\clubcloud\XpiritInsurance\Server\bin\Release\net6.0\publish\package.zip .
-az webapp deploy --resource-group rg-blazorbicepworkshop-tst-001 --name app-blazor-tst-001 --src-path package.zip
+az webapp deploy --resource-group rg-blazorbicepworkshop-tst-${participantNumber} --name app-blazor-tst-${participantNumber} --src-path package.zip
 ```
 
 You should now be able to navigate to your app, log in, and buy a new insurance policy!
@@ -286,10 +286,10 @@ Add the following snippet to the main.bicep to create the resource group:
 ```arm
 param env string = 'tst'
 param location string = 'westeurope'
-param participantInitials string = 'es'
+param participantNumber string = '001'
 
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: 'rg-blazorbicepworkshop-${env}${participantInitials}-001'
+  name: 'rg-blazorbicepworkshop-${env}-${participantNumber}'
   location: location
 }
 ```
