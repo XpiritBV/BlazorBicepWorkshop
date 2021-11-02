@@ -1,7 +1,8 @@
 param env string = 'tst'
 param location string = 'westeurope'
+param participantInitials string = 'es'
 
-var storageAccountName = 'storblazor${env}001'
+var storageAccountName = 'storblazor${env}${participantInitials}001'
 
 resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   name: storageAccountName
@@ -20,7 +21,7 @@ resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
 }
 
-var serverFarmName = 'plan-blazor-${env}-001'
+var serverFarmName = 'plan-blazor-${env}${participantInitials}-001'
 resource appServicePlan 'Microsoft.Web/serverfarms@2019-08-01' = {
   name: serverFarmName
   location: location
@@ -32,7 +33,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2019-08-01' = {
 
 var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${stg.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${stg.listKeys().keys[0].value}'
 
-var appServiceName = 'app-blazor-${env}-001'
+var appServiceName = 'app-blazor-${env}${participantInitials}-001'
 resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
   name: appServiceName
   location: location
