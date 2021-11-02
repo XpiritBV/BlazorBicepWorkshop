@@ -29,6 +29,7 @@ module appService 'appService.bicep' = {
   params: {
     serverFarmName: serverFarmName
     appServiceName: appServiceName
+    location: location
     storageConnectionString: stg.outputs.storageConnectionString
   }
 }

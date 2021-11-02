@@ -4,7 +4,7 @@ param appServiceName string
 @secure()
 param storageConnectionString string
 
-param location string = resourceGroup().location
+param location string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2019-08-01' = {
   name: serverFarmName
