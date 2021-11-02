@@ -59,7 +59,7 @@
         try
         {
             var data = await Http.GetFromJsonAsync<IEnumerable<Insurance>>("insurance");
-            _insurances.AddRange(data);
+            if (data != null) _insurances.AddRange(data);
         }
         catch (AccessTokenNotAvailableException exception)
         {

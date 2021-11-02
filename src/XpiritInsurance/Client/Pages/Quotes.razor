@@ -74,7 +74,7 @@
             _hasSuccess = false;
 
             var quote = await Http.GetFromJsonAsync<Quote>($"insurance/quote?insuranceType={insuranceType}");
-            _quotes[insuranceType] = quote.AmountPerMonth;
+            if (quote != null) _quotes[insuranceType] = quote.AmountPerMonth;
         }
         catch (AccessTokenNotAvailableException exception)
         {
@@ -103,7 +103,7 @@
             var it = (InsuranceType)Enum.Parse(typeof(InsuranceType), insuranceType);
             if (_quotes.TryGetValue(insuranceType, out var amount) && amount.HasValue)
             {
-                var response = await Http.PostAsJsonAsync<Quote>($"insurance", new Quote(null, it, amount.Value));
+                var response = await Http.PostAsJsonAsync<Quote>($"insurance", new Quote("unknown", it, amount.Value));
                 response.EnsureSuccessStatusCode();
                 _message = $"Bought {insuranceType} insurance for {amount.Value}€ per month.";
                 _hasSuccess = true;

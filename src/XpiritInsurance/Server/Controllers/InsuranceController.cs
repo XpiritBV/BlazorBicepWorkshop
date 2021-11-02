@@ -13,7 +13,7 @@ namespace XpiritInsurance.Server.Controllers;
 [Route("[controller]")]
 public class InsuranceController : ControllerBase
 {
-private readonly ILogger<InsuranceController> _logger;
+    private readonly ILogger<InsuranceController> _logger;
     private readonly QuoteAmountService _quoteAmountService;
     private readonly InsuranceService _insuranceService;
     private readonly QueueClient? _queueClient;
@@ -30,7 +30,7 @@ private readonly ILogger<InsuranceController> _logger;
     [HttpGet]
     public async Task<IActionResult> GetInsurances()
     {
-        string userName = HttpContext.User.GetDisplayName();
+        string userName = HttpContext.User.GetDisplayName() ?? "unknown";
         var insurances = await _insuranceService.GetInsurances(userName);
         return Ok(insurances);
     }
@@ -39,7 +39,7 @@ private readonly ILogger<InsuranceController> _logger;
     [HttpPost]
     public async Task<IActionResult> BuyInsurance(Quote quote)
     {
-        string userName = HttpContext.User.GetDisplayName();
+        string userName = HttpContext.User.GetDisplayName() ?? "unknown";
         decimal amount = quote.AmountPerMonth;
         if (amount < 5 || amount > 150)
         {
@@ -58,7 +58,7 @@ private readonly ILogger<InsuranceController> _logger;
     [HttpGet("quote")]
     public async Task<IActionResult> CalculateQuote(InsuranceType insuranceType)
     {
-        string userName = HttpContext.User.GetDisplayName();
+        string userName = HttpContext.User.GetDisplayName() ?? "unknown";
         decimal amount = await _quoteAmountService.CalculateQuote(userName, insuranceType);
 
         return Ok(new Quote(userName, insuranceType, amount));
