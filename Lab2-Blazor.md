@@ -409,7 +409,7 @@ You will now add an open-source library named 'MudBlazor' to the Client project,
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     ```
-- Next, add this snippet to the end `body` section:
+- Next, add this snippet to the end of the `body` section:
     ```
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     ```
