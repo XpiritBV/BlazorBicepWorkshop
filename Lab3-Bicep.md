@@ -293,7 +293,7 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
 }
 ```
-Now you've done that, you will see that VS Code will show an error on the above new resource. By default, a bicep template is deployed at the scope of a resource group. You cannot create a resource group within a resource group, and thus you get the error. You will deploy this template at the scope of a subscription, so you need to add the following line to the top of the main.bicep:
+The above snippet creates a Resource Group called 'rg'. Now you've done that, you will see that VS Code will show an error on the above new resource. By default, a bicep template is deployed at the scope of a resource group. You cannot create a resource group within a resource group, and thus you get the error. You will deploy this template at the scope of a subscription, so you need to add the following line to the top of the main.bicep:
 
 ```arm
 targetScope = 'subscription'
@@ -301,7 +301,7 @@ targetScope = 'subscription'
 The above line will indicate that you mean to deploy this template at the subscription scope.
 
 ### Storage Account
-Create a new template in the same directory as the main.bicep and call it storage.bicep. Copy the storage account resource into it. You will notice that you now miss two parameters. Add them to the file as well. Your storage.bicep should look like this:
+Create a new template in the same directory as the main.bicep and call it storage.bicep. Copy the storage account resource from the old main.bicep into this new file. You will notice that you now miss two parameters. Add them to the file as well. Your storage.bicep should look like this:
 
 ```arm
 param storageAccountName string
@@ -324,7 +324,7 @@ resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
 }
 ```
-Last but not least, you need to return the connection string to the storage account because that needs to be set as a parameter on the App Service. To do that, you can declare an output in Bicep, as shown here. Add this to the storage.bicep file.
+Last but not least, you need to return the connection string to the storage account because that needs to be set as a parameter on the App Service. To do that, you can declare an 'output' in Bicep, as shown here. Add this to the bottom of the storage.bicep file.
 
 ```arm
 var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${stg.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${stg.listKeys().keys[0].value}'
@@ -334,7 +334,14 @@ output storageConnectionString string = storageConnectionString
 > WARNING: The output above returns the connection string in plain text as there is no way in Bicep to do this securely. In a real-life scenario, that is not an option since that connection string will then be readable in plain text in, for example, the Azure DevOps pipeline or on the command line. It's better to store this secret in Key Vault, or use a Managed Identity instead.
 
 ### Using the storage module
-Open main.bicep. You will now use the above-created module on the lines where the storage account used to be defined. To do that, you use the 'module' keyword instead of the 'resource' keyword. You give it a name like you would while using the 'resource' keyword. Instead of specifying a type, you now reference the just created module using its path. Start typing 'module stg ', and VS Code should show you all available modules. Select the storage account you just created. Type '=' and then select the 'required-properties' option in the drop-down. The generated snippet should look like this:
+Open main.bicep. You will now use the above-created module on the lines where the storage account used to be defined. To do that, you use the 'module' keyword instead of the 'resource' keyword. You give it a name like you would while using the 'resource' keyword. Instead of specifying a type, you now reference the just created module using its path. Start typing 'module stg \<space\>', and VS Code should show you all available modules. 
+![](media/bicep-module.png)
+
+Select the storage account you just created. Type '= \<space\>' and then select the 'required-properties' option in the drop-down. 
+
+![](media/bicep-module-required-parameters.png)
+
+The generated snippet should look like this:
 ```arm
 module stg 'storage.bicep' = {
   scope: 
@@ -356,7 +363,7 @@ module stg 'storage.bicep' = {
   }
 }
 ```
-You need to give the module a name, and you see that the module requires a few parameters. Supply the values using the parameters in the main.bicep. The complete module definition is shown below:
+You need to give the module a name, and you see that the module requires a few parameters. Supply the values using the parameters in the main.bicep file. The complete module definition is shown below:
 ```arm
 module stg 'storage.bicep' = {
   scope: rg
