@@ -701,12 +701,11 @@ Change the code from this:
 
 Your project should now compile and run without errors. Use the [same test method](#test-your-code) as before.
 
-- Instead of using 'Fetch data', navigate to  [My quotes](https://localhost:5001/quotes)
-
-- Look at [My insurances](https://localhost:5001/insurances) to see your current insurances
+- Instead of using 'Fetch data', look at [My insurances](https://localhost:5001/insurances) to see your current insurances
+- Navigate to [My quotes](https://localhost:5001/quotes)
 - Click on any of the 'Get Quote'
 - Click on 'Buy This' for which a quote was fetched
-- Navigate to [My insurances](https://localhost:5001/insurances) to see your new insurances
+- Navigate back to [My insurances](https://localhost:5001/insurances) to see your new insurances
 
 # Even more modifications - adding a Storage Queue
 If everything works properly, you can add some Cloud functionality to the app.
